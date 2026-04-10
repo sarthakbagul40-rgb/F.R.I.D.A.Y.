@@ -1,0 +1,9 @@
+.venv/
+.env
+__pycache__/
+*.bak
+*.png
+simulation_screen.png
+test_screen.png
+jarvis_screen.png
+scratch/
