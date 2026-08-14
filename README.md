@@ -4,6 +4,20 @@ A witty, voice-activated desktop AI assistant powered by **Google Gemini 2.5 Fla
 
 ---
 
+## 📌 Project Overview & System Description
+
+**J.A.R.V.I.S** (*Just A Rather Very Intelligent System*) is a full-featured, voice-driven personal AI desktop companion inspired by Tony Stark's iconic assistant from Marvel's *Iron Man*.
+
+Built natively for Windows using Python and Google's flagship **Gemini 2.5 Flash** multimodal model, JARVIS operates in the background as your interactive voice agent. It listens for the wake word **"JARVIS"**, addresses you as *"Sir"* or *"Boss"*, executes automation tasks, transcribes voice notes, analyzes your current computer screen via computer vision, and proactively suggests helpful follow-up actions.
+
+### 🌟 Key Architectural Highlights
+- **Multimodal Intelligence**: Uses the official `google-genai` SDK for low-latency conversational AI and computer vision screen reporting.
+- **Proactive Task Improvisation**: Evaluates completed commands to offer clever "Level-2" improvisations (e.g., after opening an editor, asking to load your workspace).
+- **High Resilience & Graceful Fallbacks**: Automatically falls back to local file searching or web queries if apps or API connections are unavailable, with zero process-crash risks.
+- **Native Windows Integration**: Built-in SAPI5 speech output, Win32 process controls, desktop screen capture, and Windows Startup automation.
+
+---
+
 ## ✨ Features
 
 - 🧠 **Gemini 2.5 Flash AI Brain**: Integrated with Google's latest `google-genai` SDK for intelligent, character-driven voice responses (always addresses you as *Sir* or *Boss*).
