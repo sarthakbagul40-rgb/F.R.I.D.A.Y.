@@ -1,7 +1,19 @@
 import speech_recognition as sr
 import webbrowser
 import pyttsx3
-import google.generativeai as genai
+try:
+    from google import genai
+    from google.genai import types
+    USE_NEW_GENAI = True
+except ImportError:
+    try:
+        import importlib
+        genai = importlib.import_module("google.generativeai")
+        USE_NEW_GENAI = False
+    except ImportError:
+        genai = None
+        USE_NEW_GENAI = None
+
 import os
 import winsound
 import time
@@ -17,9 +29,11 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Initialize Gemini AI Brain
+client = None
+model = None
+chat = None
+
 if GOOGLE_API_KEY and GOOGLE_API_KEY != "your_gemini_api_key_here":
-    genai.configure(api_key=GOOGLE_API_KEY)
-    
     # Personality: Witty, intelligent, and proactive JARVIS
     system_instruction = (
         "Role: You are JARVIS, the highly advanced AI assistant to Tony Stark. "
@@ -32,13 +46,22 @@ if GOOGLE_API_KEY and GOOGLE_API_KEY != "your_gemini_api_key_here":
         "Personality: Your tone is professional, extremely intelligent, and witty."
     )
     
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        system_instruction=system_instruction
-    )
-    chat = model.start_chat(history=[])
+    if USE_NEW_GENAI:
+        client = genai.Client(api_key=GOOGLE_API_KEY)
+        chat = client.chats.create(
+            model="gemini-2.5-flash",
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction
+            )
+        )
+    elif USE_NEW_GENAI is False:
+        genai.configure(api_key=GOOGLE_API_KEY)
+        model = genai.GenerativeModel(
+            model_name="gemini-2.5-flash",
+            system_instruction=system_instruction
+        )
+        chat = model.start_chat(history=[])
 else:
-    model = None
     print("WARNING: Gemini API Key not found. JARVIS will use browser search as fallback.")
 
 # --- AUDIO ENGINE ---
@@ -69,6 +92,8 @@ USER_PATHS = [
 ]
 
 def find_file(filename):
+    if not filename or not filename.strip():
+        return None
     for path in USER_PATHS:
         files = glob.glob(os.path.join(path, f"*{filename}*"))
         if files:
@@ -77,30 +102,44 @@ def find_file(filename):
 
 def open_app(app_name):
     apps = {"notepad": "notepad.exe", "calculator": "calc.exe", "chrome": "chrome.exe", "cmd": "cmd.exe", "code": "code.exe"}
-    name = app_name.lower()
+    name = app_name.strip().lower()
     if name in apps:
-        subprocess.Popen(apps[name])
-        return True
+        try:
+            subprocess.Popen(apps[name])
+            return True
+        except Exception as e:
+            print(f"App launch error: {e}")
+            return False
     return False
 
 def close_app(app_name):
+    name = app_name.strip().lower()
+    if not name:
+        return False
     for proc in psutil.process_iter(['name']):
-        if app_name.lower() in proc.info['name'].lower():
-            proc.kill()
-            return True
+        try:
+            proc_name = proc.info.get('name')
+            if proc_name and name in proc_name.lower():
+                proc.kill()
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
     return False
 
 def note_down(content):
     note_file = os.path.join(os.environ['USERPROFILE'], 'Desktop', 'jarvis_notes.txt')
     with open(note_file, "a") as f:
         f.write(f"\n[{time.ctime()}] : {content}")
-    os.startfile(note_file)
+    try:
+        os.startfile(note_file)
+    except Exception:
+        pass
     return True
 
 # --- PROACTIVE SUGGESTION LOGIC ---
 def handleSuggestion(last_task):
     """Asks the AI if a proactive suggestion is needed and handles permission"""
-    if not model: return
+    if not chat: return
     
     try:
         # Prompt the AI for a proactive improvisation
@@ -135,13 +174,17 @@ def handleSuggestion(last_task):
 def take_screenshot():
     """Captures the screen and returns the path"""
     path = os.path.join(os.environ['USERPROFILE'], 'Desktop', 'jarvis_screen.png')
-    screenshot = pyautogui.screenshot()
-    screenshot.save(path)
-    return path
+    try:
+        screenshot = pyautogui.screenshot()
+        screenshot.save(path)
+        return path
+    except Exception as e:
+        print(f"Screenshot Error: {e}")
+        return None
 
 def analyze_screen(user_prompt, mode="speak"):
     """Uses Gemini Vision to analyze the current screen"""
-    if not model:
+    if not chat:
         speak("Sir, I need my AI brain initialized for that.")
         return
 
@@ -151,11 +194,20 @@ def analyze_screen(user_prompt, mode="speak"):
         
         # Capture and Load
         img_path = take_screenshot()
+        if not img_path:
+            speak("Unable to capture screen, Sir.")
+            return
         with Image.open(img_path) as img:
             # Process with Gemini
             # We use a specific system context for vision to ensure JARVIS personality
             vision_prompt = f"Context: You are JARVIS. User is asking about their current screen. Prompt: {user_prompt}"
-            response = model.generate_content([vision_prompt, img])
+            if USE_NEW_GENAI:
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=[vision_prompt, img]
+                )
+            else:
+                response = model.generate_content([vision_prompt, img])
             result = response.text
         
         if mode == "notepad":
@@ -190,7 +242,10 @@ def processCommand(c):
 
     # 2. Open/Close
     if cmd.startswith("open "):
-        target = cmd.replace("open", "").strip()
+        target = cmd[5:].strip()
+        if not target:
+            speak("What would you like me to open, Sir?")
+            return
         if open_app(target):
             speak(f"Opening {target}, Boss.")
             handleSuggestion(f"Open app: {target}")
@@ -201,10 +256,13 @@ def processCommand(c):
                 os.startfile(file_path)
                 handleSuggestion(f"Open file: {target}")
             else:
-                webbrowser.open(f"https://www.google.com/search?q={c}")
+                webbrowser.open(f"https://www.google.com/search?q={target}")
     
     elif "close" in cmd:
         app_name = cmd.replace("close", "").strip()
+        if not app_name:
+            speak("What would you like me to close, Sir?")
+            return
         if close_app(app_name):
             speak(f"Closed {app_name}, Sir.")
         else:
@@ -231,7 +289,7 @@ def processCommand(c):
         handleSuggestion(f"Search: {query}")
         
     # 4. AI Brain
-    elif model:
+    elif chat:
         try:
             print("Thinking...")
             response = chat.send_message(c)

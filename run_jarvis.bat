@@ -1,5 +1,8 @@
 @echo off
-cd /d "d:\python\J.A.R.V.I.S"
-call .venv\Scripts\activate.bat
+cd /d "%~dp0"
+if exist ".venv\Scripts\activate.bat" (
+    call .venv\Scripts\activate.bat
+)
 python main.py
 pause
+
