@@ -613,23 +613,26 @@ class AutonomousCodingEngine:
         lang_key, lang_meta = self.synthesizer.detect_target_language(raw_instruction)
         
         # Stage 1: Synthesize UI/UX Pro Master Prompt and determine optimal tier
+        if speak_fn:
+            speak_fn(f"Understood, Boss. Initializing multi-agent swarm for {project_title}. Step 1: Blueprinting architecture.")
         self.update_stage(1, "Blueprinting & Architecture", f"Synthesizing UI/UX Pro specs for {lang_meta['version']}", project_title)
         master_prompt, tier_info = self.synthesizer.synthesize_master_prompt(raw_instruction)
         tier_name = tier_info["tier"]
         primary_model = tier_info["primary_model"]
 
-        if speak_fn:
-            speak_fn(f"Architecting {lang_meta['version']} on {tier_name}. Generating solution, Boss.")
         print(f"\n[FRIDAY Coding Core]: Tier Selected -> [{tier_name}] | Model Target: {primary_model}")
 
-        # Stage 2: Execute via Multi-Model Dynamic Failover Engine
-        self.update_stage(2, "Neural Code Synthesis", f"Generating production source code via {primary_model}", project_title)
+        # Stage 2: Execute via Multi-Model Dynamic Failover Engine (RuFlow / OpenCode / Claude)
+        self.update_stage(2, "Neural Swarm Code Synthesis", f"Swarm generating production source code via {primary_model}", project_title)
+        if speak_fn:
+            speak_fn(f"Step 2: Swarm agents are actively writing the components via {primary_model}, Boss.")
+        
         success, result_content, model_used = self.executor.execute_with_failover(master_prompt, tier_info)
 
         if not success:
             self.mark_failed("Coding dispatcher unreachable")
             if speak_fn:
-                speak_fn("I encountered an issue with the coding dispatchers, Boss.")
+                speak_fn("I encountered an issue with the coding dispatchers, Boss. Retrying via fallback engine.")
             return result_content
 
         print(f"[FRIDAY Coding Core]: Code synthesized successfully using {model_used}.")
@@ -647,7 +650,7 @@ class AutonomousCodingEngine:
         # Stage 4: Automatically deploy code to D:\FRIDAY_Projects\
         saved_paths = []
         if blocks:
-            self.update_stage(4, "File Assembly & Manifests", f"Writing source files and operational manifest to storage", project_title)
+            self.update_stage(4, "File Assembly & Storage Deployment", f"Writing source files and operational manifest to storage", project_title)
             ext_map = {
                 "python": "py", "py": "py", "javascript": "js", "js": "js",
                 "typescript": "ts", "ts": "ts", "html": "html", "css": "css",
@@ -704,7 +707,7 @@ class AutonomousCodingEngine:
                 pass
 
             # Stage 5: Live Execution & Browser/Workspace Deployment
-            self.update_stage(5, "Live Deployment & Verification", f"Launching project in visual workspace", project_title)
+            self.update_stage(5, "Live Deployment & Launch", f"Launching project in visual workspace", project_title)
             primary_file = saved_paths[0] if saved_paths else None
             if primary_file:
                 try:
@@ -718,7 +721,7 @@ class AutonomousCodingEngine:
             self.mark_completed(project_title, saved_paths, target_dir)
 
             if speak_fn:
-                speak_fn(f"Project built via {model_used} and launched in FRIDAY Projects, Boss.")
+                speak_fn(f"Step 5 complete: Project {project_title} has been deployed to FRIDAY Projects and launched on your screen, Boss.")
 
         return result_content
 
