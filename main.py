@@ -2056,19 +2056,22 @@ if __name__ == "__main__":
             wake_word_found = False
             parsed_command = ""
             
-            for wake in WAKE_WORDS:
+            for wake in sorted(WAKE_WORDS, key=len, reverse=True):
                 if wake in command_lower:
                     wake_word_found = True
                     idx = command_lower.find(wake)
                     cmd_idx = idx + len(wake)
-                    parsed_command = raw_input[cmd_idx:].strip()
-                    if parsed_command.startswith(",") or parsed_command.startswith(":"):
-                        parsed_command = parsed_command[1:].strip()
-                    # Handle wake word at the end (e.g. "how many fingers am I holding Friday")
-                    if not parsed_command:
-                        prefix_cmd = raw_input[:idx].strip().rstrip(",:")
-                        if prefix_cmd:
-                            parsed_command = prefix_cmd
+                    suffix = raw_input[cmd_idx:].strip().strip(",.?!:;-~ ")
+                    prefix = raw_input[:idx].strip().strip(",.?!:;-~ ")
+                    
+                    if suffix and len(suffix) > 0:
+                        parsed_command = suffix
+                        if prefix and len(prefix) > 0:
+                            parsed_command = f"{prefix} {suffix}".strip()
+                    elif prefix and len(prefix) > 0:
+                        parsed_command = prefix
+                    else:
+                        parsed_command = ""
                     break
             
             # Discard background noise / utterances without wake word
