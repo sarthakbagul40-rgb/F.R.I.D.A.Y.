@@ -85,17 +85,23 @@ UNIVERSAL_FULLSTACK_MASTER_PROMPT = """You are the Principal Lead Full-Stack UI/
 ### 📋 USER SPECIFICATION:
 "{user_requirement}"
 
-### 🎨 MANDATORY UI/UX PRO DESIGN SYSTEM:
+### 🎨 MANDATORY F-AURA (FRIDAY AURA) DESIGN SYSTEM & ASSETS:
 {ui_ux_pro_section}
 
-### ⚠️ STRICT ARCHITECTURAL REQUIREMENTS:
-1. ZERO CONVERSATIONAL FILLER OR ASCII ART: Do not write greeting headers, ASCII banner boxes, or conversational text. Output the actual code directly!
-2. COMPLETE & SELF-CONTAINED: 100% complete source code with ZERO placeholders, TODOs, or cutoffs.
-3. DOMAIN AUTHENTICITY: Use realistic dish names, realistic pricing, appetizing descriptions, customer reviews, chef bio, and real working interactive features (category filter tabs, interactive order drawer, reservation modal).
-4. MODERN ASSETS: Use curated Unsplash imagery (`https://images.unsplash.com/...`), Google Fonts ('Playfair Display', 'Plus Jakarta Sans', etc.), and clean SVG icons.
+### ⚡ LIGHTWEIGHT & LOW-RESOURCE ARCHITECTURAL DIRECTIVES:
+1. ZERO NPM/NODE BLOAT: Zero bulky npm dependencies. Use native browser APIs, modern CSS3 variables, and instant CDN links (<script src="https://unpkg.com/lucide@latest"></script>). Total bundle under 25KB!
+2. COMPLETE SOURCE CODE ONLY: Output the complete, working production code inside markdown code fences. NO conversational filler, NO ASCII banner boxes, NO placeholders, and NO truncation.
+3. DOMAIN AUTHENTICITY: Use realistic domain content, realistic pricing, appetizing descriptions, customer reviews, and working interactive features (category filter tabs, interactive cart drawer, booking modal, toast notifications).
+4. FULLSTACK HARMONY (If Fullstack requested):
+   - Provide ```python (main.py)```: Lightweight FastAPI/Python server with built-in SQLite database storage, CORS, and REST API endpoints.
+   - Provide ```html (index.html)```: Complete F-Aura frontend interface connected via async fetch('/api/...').
+   - Provide ```css (style.css)```: Modern F-Aura styling, glassmorphism, and responsive grid.
+   - Provide ```js (app.js)```: Async client state manager with toast notifications.
+5. STANDALONE FRONTEND (If Frontend requested):
+   - Provide complete, self-contained single-file or multi-file HTML5/CSS/JS with embedded F-Aura components.
 
 ### 💻 OUTPUT DIRECTIVE:
-Output the complete, single-file or multi-file production source code inside standard markdown code fences (```html ... ```).
+Output the full code in standard markdown code fences (```lang ... ```).
 """
 
 
@@ -107,9 +113,11 @@ class PromptEngineeringSynthesizer:
     """
 
     def detect_target_language(self, user_query: str) -> Tuple[str, Dict[str, str]]:
-        """Identifies target programming language with explicit priority for web frontend keywords."""
+        """Identifies target programming language with explicit priority for fullstack and frontend keywords."""
         q = user_query.lower()
-        if any(w in q for w in ["html", "website", "web page", "page", "front end", "frontend", "site", "landing", "ui", "menu", "restaurant", "store", "shop", "portfolio", "dashboard", "form"]):
+        if any(w in q for w in ["fullstack", "full stack", "backend and frontend", "frontend and backend", "api and frontend", "with database"]):
+            return "fullstack", {"version": "Python FastAPI + F-Aura HTML5/CSS3/JS", "standards": "RESTful endpoints, SQLite persistent storage, Async Fetch UI, Lucide icons."}
+        elif any(w in q for w in ["html", "website", "web page", "page", "front end", "frontend", "site", "landing", "ui", "menu", "restaurant", "store", "shop", "portfolio", "dashboard", "form"]):
             return "html", LANGUAGE_STANDARDS["html"]
         elif "python" in q or "py " in q or ".py" in q or "fastapi" in q or "flask" in q or "django" in q:
             return "python", LANGUAGE_STANDARDS["python"]
@@ -139,46 +147,56 @@ class PromptEngineeringSynthesizer:
             return "html", LANGUAGE_STANDARDS["html"]
 
     def synthesize_design_tokens(self, user_instruction: str) -> str:
-        """Dynamically synthesizes authentic, domain-tailored UI/UX Pro design tokens, colors, typography, and interactive components."""
+        """Dynamically synthesizes authentic, domain-tailored F-Aura design tokens, colors, typography, and interactive components."""
         ins = user_instruction.lower()
+        f_aura_baseline = """
+- CORE ASSETS (Zero Install):
+  • Lucide Vector Icons: <script src="https://unpkg.com/lucide@latest"></script> (Initialize with `lucide.createIcons();`).
+  • Film Grain Overlay: Subtle SVG noise texture for depth.
+  • F-Aura Toast System: Floating non-intrusive toast alerts on actions.
+  • Aceternity Cursor Spotlight: Card spotlight tracking cursor hover angle."""
+
         if any(w in ins for w in ["food", "restaurant", "biryani", "cafe", "coffee", "bakery", "dish", "menu", "pizza", "burger", "bar", "dining"]):
-            return """- DOMAIN THEME: Artisanal Gastronomy & Culinary Elegance
+            return f"""- DOMAIN THEME: Artisanal Gastronomy & Culinary Elegance
 - COLOR PALETTE: Warm Saffron Gold (hsl(38, 95%, 52%)), Spicy Terracotta (hsl(14, 88%, 52%)), Deep Charcoal Truffle (hsl(24, 18%, 10%)), Velvet Card Surface (hsl(24, 15%, 15%)), Warm Cream Text (#fff8ee).
-- TYPOGRAPHY: Heading: 'Playfair Display' (Editorial Serif) or 'Cinzel' (Luxury), Body: 'Plus Jakarta Sans' / 'Outfit' (Ultra-clean legibility).
-- IMAGERY & MEDIA: Embed high-definition Unsplash culinary photos (e.g. aromatic dum biryani, sizzling skewers, spices, refreshing beverages) with subtle hover scale/zoom.
-- REQUIRED COMPONENTS & INTERACTIVITY:
-  1. Hero section with award-winning headline, appetizing tagline, 'Order Now' and 'Book a Table' CTAs.
-  2. Interactive Menu Filter (All, Biryani Specials, Appetizers, Desserts, Beverages) with real dish names, appetizing descriptions, spice meter badges (🌶️🌶️), and prices.
-  3. Working 'Add to Order' drawer with real-time cart subtotal and checkout modal.
-  4. 'Chef's Secret Heritage' story section with handcrafted craft highlights.
-  5. Customer Reviews Carousel with star ratings and verified foodie quotes.
-  6. Table Reservation Modal with date/time/guest picker and confirmation toast.
-  7. Opening Hours, Location Map embed placeholder, and Newsletter signup footer.
-- CRITICAL DIRECTIVE: ZERO AI-jargon (NO mentions of 'neural', 'sub-second reasoning', 'autonomous layer'). All copy must read like an authentic, 5-star Michelin-level restaurant!"""
+- TYPOGRAPHY: Heading: 'Playfair Display' / 'Cinzel', Body: 'Plus Jakarta Sans'.
+- IMAGERY & MEDIA: Embed high-definition Unsplash food photography.
+- REQUIRED COMPONENTS:
+  1. Hero section with headline, 'Order Now' and 'Book a Table' buttons.
+  2. Interactive Menu Filter (All, Specials, Appetizers, Drinks) with real dish names, spice badges (🌶️🌶️), and prices.
+  3. Working 'Add to Order' drawer with live cart counter and checkout subtotal.
+  4. Table Reservation Modal with date/time picker and toast feedback.
+  5. Customer Reviews Carousel with star ratings and verified foodie quotes.{f_aura_baseline}"""
 
         elif any(w in ins for w in ["shop", "store", "ecommerce", "cart", "clothing", "fashion", "shoes", "product", "buy"]):
-            return """- DOMAIN THEME: High-Fashion Luxury Boutique & Modern E-Commerce
-- COLOR PALETTE: Pure Editorial White (#ffffff) / Deep Onyx (#0f1115), Rose Gold / Champagne Accent (hsl(35, 75%, 60%)), Soft Cashmere Gray (#f4f4f6), Rich Charcoal Text (#1a1a1a).
+            return f"""- DOMAIN THEME: High-Fashion Luxury Boutique & Modern E-Commerce
+- COLOR PALETTE: Pure Editorial White (#ffffff) / Deep Onyx (#0f1115), Rose Champagne (hsl(35, 75%, 60%)), Cashmere Gray (#f4f4f6), Rich Charcoal Text (#1a1a1a).
 - TYPOGRAPHY: Display: 'Syne' or 'Bodoni Moda', Body: 'Inter' / 'Plus Jakarta Sans'.
-- REQUIRED COMPONENTS: Sticky Navigation with live Cart Badge, Hero Banner with Seasonal Collection, Product Grid with quick-add to cart, image hover flip, price tag with discount badge, size/color variant selectors, Customer Reviews with star ratings, slide-out Cart Drawer with promo code input and checkout button, Free Shipping & Guarantee trust badges."""
+- REQUIRED COMPONENTS: Sticky Nav with live Cart Badge, Seasonal Collection Banner, Product Grid with 3D Spotlight tilt, image hover flip, price discount tags, size variant selectors, slide-out Cart Drawer with promo code input and checkout button, Free Shipping & Guarantee trust badges.{f_aura_baseline}"""
 
         elif any(w in ins for w in ["health", "medical", "doctor", "clinic", "hospital", "fitness", "wellness", "dentist"]):
-            return """- DOMAIN THEME: Medical Trust, Serene Wellness & Clinical Excellence
+            return f"""- DOMAIN THEME: Medical Trust, Serene Wellness & Clinical Excellence
 - COLOR PALETTE: Pure Crisp White (#ffffff), Healing Teal (hsl(172, 80%, 38%)), Oceanic Blue (hsl(210, 85%, 45%)), Soft Slate Surface (#f8fafc), Midnight Navy Text (#0f172a).
 - TYPOGRAPHY: Heading: 'Plus Jakarta Sans', Body: 'Inter'.
-- REQUIRED COMPONENTS: Instant Appointment Booking Widget, Specialist Doctor Profiles with credentials and ratings, Service Cards with treatment details, Patient Testimonials, Emergency Hotline Banner, Insurance partners grid."""
+- REQUIRED COMPONENTS: Instant Appointment Booking Widget, Specialist Doctor Profiles with credentials and ratings, Service Cards with treatment details, Patient Testimonials, Emergency Hotline Banner, Insurance partners grid.{f_aura_baseline}"""
 
         elif any(w in ins for w in ["crypto", "fintech", "finance", "bank", "invest", "trading", "wallet"]):
-            return """- DOMAIN THEME: Next-Gen FinTech & Secure Institutional Finance
+            return f"""- DOMAIN THEME: Next-Gen FinTech & Secure Institutional Finance
 - COLOR PALETTE: Obsidian Black (#080b11), Emerald Prosperity Glow (hsl(152, 90%, 48%)), Electric Sapphire (hsl(220, 95%, 62%)), Translucent Slate Cards (rgba(255,255,255,0.04)), Crisp Silver Text (#f1f5f9).
 - TYPOGRAPHY: Display: 'Space Grotesk' / 'Outfit', Data/Numbers: 'JetBrains Mono'.
-- REQUIRED COMPONENTS: Real-Time Market Ticker, Interactive Portfolio Simulator / Yield Calculator, Feature Bento Grid with animated gradient borders, Security Certifications & 256-bit AES Encryption badges."""
+- REQUIRED COMPONENTS: Real-Time Market Ticker, Interactive Investment Yield Calculator slider, Feature Bento Grid with animated gradient borders, Security Certifications & 256-bit AES Encryption badges.{f_aura_baseline}"""
+
+        elif any(w in ins for w in ["saas", "dashboard", "developer", "software", "api", "cloud", "ai", "platform"]):
+            return f"""- DOMAIN THEME: Next-Gen SaaS & Developer Platform
+- COLOR PALETTE: Obsidian Slate (#0b0f19), Electric Indigo (#6366f1), Cyber Neon Cyan (#38bdf8), Surface Bento (#131b2e), Silver Text (#e2e8f0).
+- TYPOGRAPHY: Display: 'Outfit', Body: 'Plus Jakarta Sans', Code: 'JetBrains Mono'.
+- REQUIRED COMPONENTS: Hero with live terminal demo, Magic UI Bento Grid with radiant borders, Interactive Monthly/Annual Pricing Toggle, Animated metric counter badges, Interactive FAQ accordion.{f_aura_baseline}"""
 
         else:
-            return """- DOMAIN THEME: Bespoke Modern UI/UX Pro Experience
-- COLOR PALETTE: Curated Harmonious Palette tailored specifically to the prompt (e.g. Deep Charcoal #0c1017, Vibrant Indigo #6366f1, Soft Violet #8b5cf6, Surface Cards: rgba(255,255,255,0.04)).
+            return f"""- DOMAIN THEME: Bespoke Modern F-Aura UI/UX Experience
+- COLOR PALETTE: Curated Harmonious Palette (Deep Charcoal #0c1017, Vibrant Indigo #6366f1, Soft Violet #8b5cf6, Surface Cards: rgba(255,255,255,0.04)).
 - TYPOGRAPHY: Primary: 'Plus Jakarta Sans' / 'Outfit' with fluid clamp() scale.
-- REQUIRED COMPONENTS: Rich responsive layout, interactive states (:hover, :active, :focus-visible), micro-animations, glassmorphic elevation layers, real authentic domain content with zero generic placeholder text."""
+- REQUIRED COMPONENTS: Rich responsive layout, interactive states (:hover, :active), micro-animations, glassmorphic elevation layers, real authentic domain content with zero placeholder text.{f_aura_baseline}"""
 
     def synthesize_master_prompt(self, user_instruction: str) -> Tuple[str, Dict[str, Any]]:
         """Compiles raw user command into UI/UX Pro Master Prompt in <1ms at 0 tokens."""
@@ -188,7 +206,9 @@ class PromptEngineeringSynthesizer:
         
         # Adaptive focus detection
         ins_lower = user_instruction.lower()
-        if any(k in ins_lower for k in ["ui", "frontend", "css", "html", "design", "landing", "dashboard", "page"]):
+        if lang_key == "fullstack":
+            scope_focus = "End-to-end Full-Stack harmony: Python FastAPI/SQLite backend paired with interactive F-Aura frontend."
+        elif any(k in ins_lower for k in ["ui", "frontend", "css", "html", "design", "landing", "dashboard", "page"]):
             scope_focus = "Frontend UI/UX Excellence, human-designed authentic aesthetics, micro-animations, interactive state management."
         elif any(k in ins_lower for k in ["backend", "api", "database", "sql", "fastapi", "server", "crud"]):
             scope_focus = "Backend robustness, secure API endpoints, transactional database queries, data schemas."
@@ -720,14 +740,26 @@ class AutonomousCodingEngine:
             saved_paths.append(target_path)
             print(f"[FRIDAY Code Engine]: Saved file -> {target_path}")
 
-        # Auto-generate one-click start.bat and BRAIN.md operational manifest
+        # Auto-generate one-click start.bat, requirements.txt, and BRAIN.md operational manifest
         try:
             bat_path = os.path.join(target_dir, "start.bat")
-            if any(f.endswith(".html") for f in saved_paths):
+            has_py = any(f.endswith(".py") for f in saved_paths)
+            has_html = any(f.endswith(".html") for f in saved_paths)
+            
+            if has_py and has_html:
+                # Full-Stack Application (FastAPI/Flask Backend + F-Aura Frontend)
+                with open(bat_path, "w", encoding="utf-8") as bf:
+                    bf.write(f"@echo off\r\necho ===================================================\r\necho   F.R.I.D.A.Y. Full-Stack Runtime Engine // {slug}\r\necho ===================================================\r\necho Launching Browser Frontend...\r\ntimeout /t 1 /nobreak >nul\r\nstart \"\" \"index.html\"\r\necho Starting High-Performance Python Backend on port 8000...\r\npython main.py\r\npause\r\n")
+                # Auto-generate requirements.txt if needed
+                req_path = os.path.join(target_dir, "requirements.txt")
+                if not os.path.exists(req_path):
+                    with open(req_path, "w", encoding="utf-8") as rf:
+                        rf.write("fastapi>=0.110.0\nuvicorn>=0.29.0\npydantic>=2.6.0\n")
+            elif has_html:
                 html_target = [os.path.basename(f) for f in saved_paths if f.endswith(".html")][0]
                 with open(bat_path, "w", encoding="utf-8") as bf:
                     bf.write(f"@echo off\r\necho Launching {slug} in Default Browser...\r\nstart \"\" \"{html_target}\"\r\n")
-            elif any(f.endswith(".py") for f in saved_paths):
+            elif has_py:
                 py_target = [os.path.basename(f) for f in saved_paths if f.endswith(".py")][0]
                 with open(bat_path, "w", encoding="utf-8") as bf:
                     bf.write(f"@echo off\r\necho Launching {slug}...\r\npython \"{py_target}\"\r\npause\r\n")
