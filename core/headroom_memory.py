@@ -6,6 +6,8 @@ Provides persistent cross-session memory, BM25 semantic retrieval, and context c
 import os
 import json
 import re
+import threading
+import atexit
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
