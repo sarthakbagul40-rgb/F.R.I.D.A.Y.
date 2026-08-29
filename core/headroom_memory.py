@@ -262,9 +262,18 @@ class HeadroomMemoryEngine:
         # 2. SAVE SECTION 2: AUTONOMOUS EVOLUTION VAULT (F.R.I.D.A.Y.'s Choice)
         # -------------------------------------------------------------
         sec2_data = distilled_data.get("section_2_evolution_matrix", {}) if distilled_data else {
-            "boss_behavioral_insights": ["Boss values direct, elegant execution and high-speed problem solving."],
-            "friday_self_adaptation": ["Maintain calm, poised Shinobu wit with surgical technical precision."],
-            "autonomous_growth_notes": ["Continuously sharpen multimodal capabilities and prompt compilation."]
+            "boss_behavioral_insights": [
+                "Boss values direct, elegant execution and high-speed problem solving.",
+                "Boss expects F.R.I.D.A.Y. to solve mistakes autonomously without friction."
+            ],
+            "friday_self_adaptation": [
+                "Channel Shinobu Kocho's gentle, airy elegance with playful affectionate teasing.",
+                "Maintain serene composure with an effortless smile, backing all wit with lethal technical precision.",
+                "Use charming mannerisms (Ara ara~, Moshi moshi~, My my...) and sweet Hinglish banter when appropriate."
+            ],
+            "autonomous_growth_notes": [
+                "Continuously sharpen prompt synthesis and autonomous self-healing code compilation."
+            ]
         }
         sec2_entry = {"date": timestamp, "evolution_notes": sec2_data}
 
