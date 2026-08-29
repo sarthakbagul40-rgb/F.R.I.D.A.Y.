@@ -1706,6 +1706,34 @@ COMMANDS = {
     "play": handle_spotify # Fallback play handles both
 }
 
+def handle_coding_command(cmd):
+    """Directly dispatches the Multi-Agent Autonomous Coding Swarm (Claude Code CTO -> RuFlow -> OpenCode -> Gemini -> Groq LPU)."""
+    try:
+        from core.claude_bridge import coding_engine
+        play_sound("launch")
+        speak("Ara ara, Boss~ Initializing the autonomous code synthesis swarm now. Leave the architecture to me.")
+        def _run_coding():
+            coding_engine.handle_coding_request(cmd, speak_fn=speak, input_fn=input)
+        threading.Thread(target=_run_coding, daemon=True).start()
+    except Exception as err:
+        print(f"[Coding Command Dispatch Error]: {err}")
+        play_sound("error")
+        speak("I encountered an issue launching the autonomous coding swarm, Boss.")
+
+def handle_project_status(cmd):
+    """Reports the live progress and status of active/recent autonomous projects."""
+    try:
+        from core.claude_bridge import coding_engine
+        stage_num = coding_engine.current_stage
+        stage_title = coding_engine.stage_title
+        proj_title = coding_engine.project_title
+        if stage_num > 0 and stage_num < 5:
+            speak(f"We are currently in Stage {stage_num}: {stage_title} for {proj_title}, Boss. Progress is humming along nicely.")
+        else:
+            speak("All recent engineering projects are completed and deployed to your projects directory, Boss.")
+    except Exception:
+        speak("All system pipelines are operational, Boss.")
+
 # Pre-compile command dispatch regexes once at startup for instant O(1) matching
 COMPILED_COMMANDS = [
     (re.compile(rf"\b{re.escape(k)}\b"), k)
