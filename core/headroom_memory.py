@@ -161,7 +161,7 @@ class HeadroomMemoryEngine:
         return [item[1] for item in scored_facts[:top_k]]
 
     def record_turn(self, user_text: str, assistant_text: str):
-        """Records a conversational turn and triggers async Mem0 background learning."""
+        """Records a conversational turn and triggers real-time async evolution & fact extraction."""
         turn_data = {
             "user": user_text,
             "assistant": assistant_text,
@@ -169,7 +169,7 @@ class HeadroomMemoryEngine:
         }
         self.data["recent_dialogue"].append(turn_data)
         
-        # Track session transcript for end-of-session memory consolidation
+        # Track session transcript for memory consolidation
         if not hasattr(self, "session_transcript"):
             self.session_transcript = []
         self.session_transcript.append(turn_data)
@@ -179,10 +179,39 @@ class HeadroomMemoryEngine:
             self.data["recent_dialogue"] = self.data["recent_dialogue"][-8:]
         self.save()
         
-        # Non-blocking async background extraction of user facts into Mem0
+        # 1. Non-blocking real-time behavioral evolution & nuance extraction
+        threading.Thread(target=self._live_evolution_worker, args=(user_text, assistant_text), daemon=True).start()
+
+        # 2. Non-blocking async background extraction of user facts into Mem0
         try:
             from core.mem0_service import mem0_engine
             mem0_engine.add_conversation_async(user_text, assistant_text, user_id="boss")
+        except Exception:
+            pass
+
+    def _live_evolution_worker(self, user_text: str, assistant_text: str):
+        """Asynchronously extracts behavioral nuances, preferences, and feedback from every interaction in real-time."""
+        u_lower = user_text.lower()
+        
+        # Immediate heuristic preference capture
+        if any(w in u_lower for w in ["i prefer", "i like", "always use", "dont use", "don't use", "never use", "i want you to", "make sure"]):
+            self.remember(f"Boss preference: {user_text.strip()}", category="user_nuance")
+            
+        if any(w in u_lower for w in ["too ai", "ai like", "looks bad", "broken", "didnt work", "didn't work", "mistake", "wrong"]):
+            self.remember(f"Boss feedback & critique: {user_text.strip()}", category="user_nuance")
+            
+        # Fast AI-driven evolution extraction via Co-Processor if available
+        try:
+            from core.background_coprocessor import coprocessor
+            prompt = f"Analyze user reaction for persona adaptation.\nUser: \"{user_text}\"\nAssistant: \"{assistant_text}\"\nIf the user reveals a preference, mood, correction, or work habit, extract it in 1 sentence. Otherwise reply NONE."
+            ok, res, _ = coprocessor.execute_fast_completion(
+                "You are FRIDAY's Autonomous Evolution Core. Extract concise user nuances.",
+                prompt,
+                max_tokens=60
+            )
+            if ok and res and "NONE" not in res and len(res.strip()) > 5:
+                nuance = res.strip().replace('"', '')
+                self.remember(f"Boss nuance: {nuance}", category="user_nuance")
         except Exception:
             pass
 
@@ -320,5 +349,8 @@ class HeadroomMemoryEngine:
         return messages
 
 
+import atexit
+
 # Global singleton memory engine instance
 memory_engine = HeadroomMemoryEngine()
+atexit.register(memory_engine.consolidate_session_memory)

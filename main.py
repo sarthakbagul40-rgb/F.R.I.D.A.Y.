@@ -2112,3 +2112,8 @@ if __name__ == "__main__":
             break
         except Exception as e:
             print(f"\nSystem Loop Error: {e}")
+
+    try:
+        memory_engine.consolidate_session_memory()
+    except Exception:
+        pass

@@ -888,6 +888,13 @@ class AutonomousCodingEngine:
                          f"- **Tier**: {tier_name}\n"
                          f"- **Directive**: \"{raw_instruction}\"\n"
                          f"- **Files**: {', '.join([os.path.basename(p) for p in saved_paths])}\n")
+
+            # Commit project milestone into Headroom Memory & Section 1 Project Vault
+            try:
+                from core.headroom_memory import memory_engine
+                memory_engine.remember(f"Created project '{project_title}' in {target_dir} ({lang_meta['version']})", category="project_history")
+            except Exception:
+                pass
         except Exception:
             pass
 
