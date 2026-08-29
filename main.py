@@ -2083,45 +2083,60 @@ if __name__ == "__main__":
                 speak("Understood, Boss. Entering standby.")
                 break
             
+            def collect_continuous_speech(initial_phrase: str = "", silence_timeout: float = 2.8) -> str:
+                """
+                Continuous Speech Stream Accumulator:
+                Allows Boss to speak naturally at their own pace without arbitrary time limits.
+                Accumulates speech fragments until genuine silence (~3.0s) is observed.
+                """
+                parts = []
+                if initial_phrase and initial_phrase.strip():
+                    parts.append(initial_phrase.strip())
+                
+                while True:
+                    try:
+                        next_chunk = audio_queue.get(timeout=silence_timeout)
+                        if next_chunk and next_chunk.strip():
+                            clean_chunk = next_chunk.strip()
+                            if clean_chunk.lower() in ["cancel", "stop", "never mind", "nevermind", "chup", "ruko"]:
+                                play_sound("cancel")
+                                return ""
+                            parts.append(clean_chunk)
+                            print(f"   [Continued Speaking]: {clean_chunk}")
+                    except queue.Empty:
+                        break
+                return " ".join(parts).strip()
+
             if not parsed_command:
                 play_sound("launch")
                 speak("Yes, Boss?")
-                # Wait for assistant to finish speaking before listening for the command
                 neural_voice_engine.wait_until_done()
                 time.sleep(0.05)
 
-                print("--- Listening for command ---")
+                print("--- Listening for your command (Speak freely, pauses welcome) ---")
                 try:
-                    command = audio_queue.get(timeout=8.0)
+                    first_phrase = audio_queue.get(timeout=10.0)
                 except queue.Empty:
                     continue
                 
-                # Allow smooth continuation for incomplete multi-word commands (0.15s micro-buffer)
-                while is_trailing_incomplete(command) and not audio_queue.empty():
-                    try:
-                        next_chunk = audio_queue.get(timeout=0.15)
-                        if next_chunk:
-                            command = f"{command} {next_chunk}".strip()
-                    except Exception:
-                        break
+                # Continuously collect speech until 2.8s of silence
+                full_command = collect_continuous_speech(first_phrase, silence_timeout=2.8)
+                if not full_command:
+                    continue
 
-                print_heard(command)
-                processCommand(command)
+                print_heard(full_command)
+                processCommand(full_command)
                 neural_voice_engine.wait_until_done()
                 drain_audio_queues()
             else:
-                # Allow smooth continuation on direct wake+command if trailing
-                while is_trailing_incomplete(parsed_command) and not audio_queue.empty():
-                    try:
-                        next_chunk = audio_queue.get(timeout=0.15)
-                        if next_chunk:
-                            parsed_command = f"{parsed_command} {next_chunk}".strip()
-                    except Exception:
-                        break
+                # Direct wake + command: collect any continuation with 2.5s silence window
+                full_command = collect_continuous_speech(parsed_command, silence_timeout=2.5)
+                if not full_command:
+                    continue
 
                 play_sound("launch")
-                print_heard(parsed_command)
-                processCommand(parsed_command)
+                print_heard(full_command)
+                processCommand(full_command)
                 neural_voice_engine.wait_until_done()
                 drain_audio_queues()
                     
