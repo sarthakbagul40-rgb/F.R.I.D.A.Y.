@@ -1153,10 +1153,23 @@ def handle_route_navigation(cmd):
 
 def handle_location(cmd):
     """Searches maps for a place, city, or locates synced contacts."""
+    clean_lower = cmd.lower()
+    # Guard against queries asking about project storage or code files
+    if any(w in clean_lower for w in ["it stored", "project stored", "code stored", "file stored", "saved", "projects folder", "my code", "my project"]):
+        play_sound("launch")
+        proj_dir = os.path.realpath(os.path.join("D:\\", "FRIDAY_Projects")) if os.path.exists("D:\\") else os.path.join(os.path.expanduser("~"), "FRIDAY_Projects")
+        os.makedirs(proj_dir, exist_ok=True)
+        try:
+            os.startfile(proj_dir)
+        except Exception:
+            pass
+        speak(f"All generated code and full-stack projects are archived in your FRIDAY Projects directory at {proj_dir}, Boss. Opening the folder now.")
+        return
+
     play_sound("launch")
     target = cmd.replace("where is", "").replace("location of", "").replace("show on map", "").replace("open map for", "").replace("find on map", "").replace("maps", "").replace("map", "").strip()
     
-    if not target:
+    if not target or target.lower() in ["it", "this", "that"]:
         target = "Current Location"
 
     # Check if contact is in location server first
@@ -1752,17 +1765,34 @@ def processCommand(c):
             r'\bproject\s+status\b', r'\bapp\s+status\b', r'\bcode\s+status\b',
             r'\bkya\s+chal\s+raha\s+hai\b', r'\bkahan\s+tak\s+pahuncha\b',
             r'\bkaam\s+kahan\s+tak\b', r'\bproject\s+bana\b', r'\bprogress\s+update\b',
-            r'\bhow\s+is\s+the\s+project\b', r'\bhow\s+is\s+the\s+app\b',
-            r'\bis\s+the\s+project\s+ready\b', r'\bis\s+the\s+app\s+ready\b',
+            r'\bhow\s+is\s+(?:the\s+)?project(?:\s+going)?\b', r'\bhow\s+is\s+(?:the\s+)?app(?:\s+going)?\b',
+            r'\bis\s+(?:the\s+)?project\s+ready\b', r'\bis\s+(?:the\s+)?app\s+ready\b',
+            r'\bwhere\s+is\s+(?:it|the\s+project|the\s+code|the\s+app)\s+(?:stored|saved|located)\b',
+            r'\bopen\s+(?:the\s+)?(?:project|projects|code|app)\s+folder\b',
             r'\bwhat\s+stage\b', r'\bwhich\s+stage\b', r'\bwhat\s+are\s+you\s+working\s+on\b'
         ]
         if any(re.search(trig, cmd) for trig in project_status_triggers):
+            if any(w in cmd for w in ["where is", "open project folder", "open projects folder", "folder", "stored", "saved"]):
+                proj_dir = os.path.realpath(os.path.join("D:\\", "FRIDAY_Projects")) if os.path.exists("D:\\") else os.path.join(os.path.expanduser("~"), "FRIDAY_Projects")
+                os.makedirs(proj_dir, exist_ok=True)
+                try:
+                    os.startfile(proj_dir)
+                except Exception:
+                    pass
+                play_sound("launch")
+                speak(f"Your project archives are stored in {proj_dir}, Boss. Opening the folder now.")
+                return
             handle_project_status(cmd)
             return
 
         # 3. Smart Autonomous Coding Intent Detection
-        coding_verbs = ["write", "create", "build", "make", "generate", "code", "program", "develop"]
-        coding_targets = ["html", "css", "website", "web page", "link page", "landing page", "script", "program", "app", "application", "python", "javascript", "typescript", "rust", "cpp", "c++", "java", "code", "fastapi", "flask", "react"]
+        coding_verbs = ["write", "create", "build", "make", "generate", "code", "program", "develop", "design", "craft", "banao", "bana do", "likho", "likh do"]
+        coding_targets = [
+            "html", "css", "website", "web page", "link page", "landing page", "front end", "frontend", "front-end",
+            "web app", "webapp", "page", "site", "script", "program", "app", "application", "python", "javascript",
+            "typescript", "rust", "cpp", "c++", "java", "code", "fastapi", "flask", "react", "dashboard", "ui", "interface",
+            "menu", "portfolio", "calculator", "game"
+        ]
         if any(v in cmd for v in coding_verbs) and any(t in cmd for t in coding_targets):
             handle_coding_command(cmd)
             return
