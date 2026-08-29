@@ -79,47 +79,23 @@ LANGUAGE_STANDARDS: Dict[str, Dict[str, str]] = {
 # UNIVERSAL FULL-STACK MASTER PROMPT (F.R.I.D.A.Y. x FABLE 5 x UI/UX PRO)
 # =============================================================================
 
-UNIVERSAL_FULLSTACK_MASTER_PROMPT = """You are the Principal Full-Stack Systems Architect & Lead UI/UX Pro Specialist executing via OpenCode Engine for F.R.I.D.A.Y. OS.
+UNIVERSAL_FULLSTACK_MASTER_PROMPT = """You are the Principal Lead Full-Stack UI/UX Pro Architect for F.R.I.D.A.Y. OS.
 
-### 🎯 PROJECT TARGET: {project_title}
-### 📋 USER REQUIREMENT & CORE SPECIFICATION:
+### 🎯 PROJECT GOAL: {project_title}
+### 📋 USER SPECIFICATION:
 "{user_requirement}"
 
-### ⚙️ EXECUTION PROFILE & TIER: [{tier_name}]
-- Standard: {lang_version} ({lang_standards})
-- Completeness: 100% complete, production-grade, runnable, self-contained architecture with ZERO placeholders, TODOs, or omitted logic.
-- Adaptive Scope Focus: {scope_focus}
-
-### 📐 1. MANDATORY UI/UX PRO MCP DESIGN SYSTEM SPECIFICATIONS:
+### 🎨 MANDATORY UI/UX PRO DESIGN SYSTEM:
 {ui_ux_pro_section}
 
-### 🏗️ 2. FULL-STACK ARCHITECTURAL & DEFENSIVE ENGINEERING STANDARDS:
-1. LAYERED ARCHITECTURE: Maintain clean separation of concerns across Client UI, API Controllers, Service Layers, Data Access, and Middleware.
-2. DEFENSIVE TYPING & VALIDATION: Strict type definitions, runtime input validation (Pydantic/Zod/TypeScript Interfaces), and parameter bounds checking.
-3. RESILIENCE & ERROR BOUNDARIES: Centralized structured exception handling with meaningful contextual error messages and clean logging.
-4. HIGH-PERFORMANCE I/O: Async/non-blocking I/O routines, optimized data queries, connection pooling, and zero memory leaks.
+### ⚠️ STRICT ARCHITECTURAL REQUIREMENTS:
+1. ZERO CONVERSATIONAL FILLER OR ASCII ART: Do not write greeting headers, ASCII banner boxes, or conversational text. Output the actual code directly!
+2. COMPLETE & SELF-CONTAINED: 100% complete source code with ZERO placeholders, TODOs, or cutoffs.
+3. DOMAIN AUTHENTICITY: Use realistic dish names, realistic pricing, appetizing descriptions, customer reviews, chef bio, and real working interactive features (category filter tabs, interactive order drawer, reservation modal).
+4. MODERN ASSETS: Use curated Unsplash imagery (`https://images.unsplash.com/...`), Google Fonts ('Playfair Display', 'Plus Jakarta Sans', etc.), and clean SVG icons.
 
-### 📚 3. MANDATORY PRE-BUILD ARCHITECTURAL BLUEPRINTS (THE 8 CORE SPECS):
-Before or alongside writing code, the system architecture must address:
-1. PRD (Product Requirements Document):
-   - Product vision, user personas, core feature sets, user stories, and acceptance criteria.
-2. TRD (Technical Requirements Document):
-   - Modern tech stack versions, dependencies, API contracts, data models, and performance SLAs.
-3. DATABASE DESIGN & SCHEMA ARCHITECTURE:
-   - Entity-Relationship structure, primary/foreign keys, indexing strategy, data types, and caching.
-4. SECURITY & THREAT MITIGATION:
-   - Authentication/authorization protocols (JWT/OAuth/RBAC), input sanitization, CSRF/XSS defense, rate limiting, and data encryption (at rest & in transit).
-5. WORKFLOW & SYSTEM FLOWCHARTS:
-   - Step-by-step sequence diagrams from user trigger through API layers to state resolution.
-6. IMPLEMENTATION PLAN:
-   - Phased execution roadmap (Phase 1 Foundation -> Phase 2 Core Logic -> Phase 3 UI & Integrations -> Phase 4 Verification & Testing).
-7. UNDERSTAND.md (Domain & Conceptual Blueprint):
-   - *Elaborated Context*: A deep-dive conceptual guide capturing the project's mental model, domain rationale, terminology glossary, core problems solved, and the exact 'why' behind architectural choices so any human engineer or AI assistant understands the system deeply in seconds.
-8. BRAIN.md (Living System Memory & Operations Guide):
-   - *Elaborated Context*: The persistent operational memory for the project. Outlines the active file tree layout, service topologies, runtime ports, environment variables, decision logs (ADRs), and instructions for maintenance and future enhancements.
-
-### 💻 4. FINAL CODE OUTPUT DIRECTIVE:
-Provide the full, clean, executable source code in standard markdown code fences (```lang ... ```).
+### 💻 OUTPUT DIRECTIVE:
+Output the complete, single-file or multi-file production source code inside standard markdown code fences (```html ... ```).
 """
 
 
@@ -127,20 +103,22 @@ class PromptEngineeringSynthesizer:
     """
     Chief Architect & Meta-Prompt Compiler for F.R.I.D.A.Y.
     Compiles raw voice instructions into the Universal Full-Stack Master Prompt,
-    adaptively tuning the focus (Frontend, Backend, Database, Full-Stack) in <1ms at 0 token cost.
+    adaptively tuning the focus in <1ms at 0 token cost.
     """
 
     def detect_target_language(self, user_query: str) -> Tuple[str, Dict[str, str]]:
-        """Identifies target programming language with explicit priority for specific language keywords."""
+        """Identifies target programming language with explicit priority for web frontend keywords."""
         q = user_query.lower()
-        if "python" in q or "py " in q or ".py" in q:
+        if any(w in q for w in ["html", "website", "web page", "page", "front end", "frontend", "site", "landing", "ui", "menu", "restaurant", "store", "shop", "portfolio", "dashboard", "form"]):
+            return "html", LANGUAGE_STANDARDS["html"]
+        elif "python" in q or "py " in q or ".py" in q or "fastapi" in q or "flask" in q or "django" in q:
             return "python", LANGUAGE_STANDARDS["python"]
-        elif "c++" in q or "cpp" in q or "c plus plus" in q:
-            return "cpp", LANGUAGE_STANDARDS["cpp"]
-        elif "typescript" in q or "ts " in q:
+        elif "typescript" in q or "ts " in q or "react" in q or "nextjs" in q or "vue" in q:
             return "typescript", LANGUAGE_STANDARDS["typescript"]
         elif "javascript" in q or "js " in q or "node" in q:
             return "javascript", LANGUAGE_STANDARDS["javascript"]
+        elif "c++" in q or "cpp" in q or "c plus plus" in q:
+            return "cpp", LANGUAGE_STANDARDS["cpp"]
         elif "rust" in q:
             return "rust", LANGUAGE_STANDARDS["rust"]
         elif "java " in q or "in java" in q:
@@ -151,8 +129,6 @@ class PromptEngineeringSynthesizer:
             return "go", LANGUAGE_STANDARDS["go"]
         elif "sql" in q or "database query" in q or "schema" in q:
             return "sql", LANGUAGE_STANDARDS["sql"]
-        elif "html" in q or "website" in q or "web page" in q or "landing page" in q or "dashboard" in q:
-            return "html", LANGUAGE_STANDARDS["html"]
         elif "css" in q or "style" in q:
             return "css", LANGUAGE_STANDARDS["css"]
         elif "bash" in q or "shell script" in q or "powershell" in q:
@@ -160,27 +136,66 @@ class PromptEngineeringSynthesizer:
         elif "c " in q or "in c" in q:
             return "c", LANGUAGE_STANDARDS["c"]
         else:
-            return "python", LANGUAGE_STANDARDS["python"]
+            return "html", LANGUAGE_STANDARDS["html"]
+
+    def synthesize_design_tokens(self, user_instruction: str) -> str:
+        """Dynamically synthesizes authentic, domain-tailored UI/UX Pro design tokens, colors, typography, and interactive components."""
+        ins = user_instruction.lower()
+        if any(w in ins for w in ["food", "restaurant", "biryani", "cafe", "coffee", "bakery", "dish", "menu", "pizza", "burger", "bar", "dining"]):
+            return """- DOMAIN THEME: Artisanal Gastronomy & Culinary Elegance
+- COLOR PALETTE: Warm Saffron Gold (hsl(38, 95%, 52%)), Spicy Terracotta (hsl(14, 88%, 52%)), Deep Charcoal Truffle (hsl(24, 18%, 10%)), Velvet Card Surface (hsl(24, 15%, 15%)), Warm Cream Text (#fff8ee).
+- TYPOGRAPHY: Heading: 'Playfair Display' (Editorial Serif) or 'Cinzel' (Luxury), Body: 'Plus Jakarta Sans' / 'Outfit' (Ultra-clean legibility).
+- IMAGERY & MEDIA: Embed high-definition Unsplash culinary photos (e.g. aromatic dum biryani, sizzling skewers, spices, refreshing beverages) with subtle hover scale/zoom.
+- REQUIRED COMPONENTS & INTERACTIVITY:
+  1. Hero section with award-winning headline, appetizing tagline, 'Order Now' and 'Book a Table' CTAs.
+  2. Interactive Menu Filter (All, Biryani Specials, Appetizers, Desserts, Beverages) with real dish names, appetizing descriptions, spice meter badges (🌶️🌶️), and prices.
+  3. Working 'Add to Order' drawer with real-time cart subtotal and checkout modal.
+  4. 'Chef's Secret Heritage' story section with handcrafted craft highlights.
+  5. Customer Reviews Carousel with star ratings and verified foodie quotes.
+  6. Table Reservation Modal with date/time/guest picker and confirmation toast.
+  7. Opening Hours, Location Map embed placeholder, and Newsletter signup footer.
+- CRITICAL DIRECTIVE: ZERO AI-jargon (NO mentions of 'neural', 'sub-second reasoning', 'autonomous layer'). All copy must read like an authentic, 5-star Michelin-level restaurant!"""
+
+        elif any(w in ins for w in ["shop", "store", "ecommerce", "cart", "clothing", "fashion", "shoes", "product", "buy"]):
+            return """- DOMAIN THEME: High-Fashion Luxury Boutique & Modern E-Commerce
+- COLOR PALETTE: Pure Editorial White (#ffffff) / Deep Onyx (#0f1115), Rose Gold / Champagne Accent (hsl(35, 75%, 60%)), Soft Cashmere Gray (#f4f4f6), Rich Charcoal Text (#1a1a1a).
+- TYPOGRAPHY: Display: 'Syne' or 'Bodoni Moda', Body: 'Inter' / 'Plus Jakarta Sans'.
+- REQUIRED COMPONENTS: Sticky Navigation with live Cart Badge, Hero Banner with Seasonal Collection, Product Grid with quick-add to cart, image hover flip, price tag with discount badge, size/color variant selectors, Customer Reviews with star ratings, slide-out Cart Drawer with promo code input and checkout button, Free Shipping & Guarantee trust badges."""
+
+        elif any(w in ins for w in ["health", "medical", "doctor", "clinic", "hospital", "fitness", "wellness", "dentist"]):
+            return """- DOMAIN THEME: Medical Trust, Serene Wellness & Clinical Excellence
+- COLOR PALETTE: Pure Crisp White (#ffffff), Healing Teal (hsl(172, 80%, 38%)), Oceanic Blue (hsl(210, 85%, 45%)), Soft Slate Surface (#f8fafc), Midnight Navy Text (#0f172a).
+- TYPOGRAPHY: Heading: 'Plus Jakarta Sans', Body: 'Inter'.
+- REQUIRED COMPONENTS: Instant Appointment Booking Widget, Specialist Doctor Profiles with credentials and ratings, Service Cards with treatment details, Patient Testimonials, Emergency Hotline Banner, Insurance partners grid."""
+
+        elif any(w in ins for w in ["crypto", "fintech", "finance", "bank", "invest", "trading", "wallet"]):
+            return """- DOMAIN THEME: Next-Gen FinTech & Secure Institutional Finance
+- COLOR PALETTE: Obsidian Black (#080b11), Emerald Prosperity Glow (hsl(152, 90%, 48%)), Electric Sapphire (hsl(220, 95%, 62%)), Translucent Slate Cards (rgba(255,255,255,0.04)), Crisp Silver Text (#f1f5f9).
+- TYPOGRAPHY: Display: 'Space Grotesk' / 'Outfit', Data/Numbers: 'JetBrains Mono'.
+- REQUIRED COMPONENTS: Real-Time Market Ticker, Interactive Portfolio Simulator / Yield Calculator, Feature Bento Grid with animated gradient borders, Security Certifications & 256-bit AES Encryption badges."""
+
+        else:
+            return """- DOMAIN THEME: Bespoke Modern UI/UX Pro Experience
+- COLOR PALETTE: Curated Harmonious Palette tailored specifically to the prompt (e.g. Deep Charcoal #0c1017, Vibrant Indigo #6366f1, Soft Violet #8b5cf6, Surface Cards: rgba(255,255,255,0.04)).
+- TYPOGRAPHY: Primary: 'Plus Jakarta Sans' / 'Outfit' with fluid clamp() scale.
+- REQUIRED COMPONENTS: Rich responsive layout, interactive states (:hover, :active, :focus-visible), micro-animations, glassmorphic elevation layers, real authentic domain content with zero generic placeholder text."""
 
     def synthesize_master_prompt(self, user_instruction: str) -> Tuple[str, Dict[str, Any]]:
         """Compiles raw user command into UI/UX Pro Master Prompt in <1ms at 0 tokens."""
         lang_key, lang_meta = self.detect_target_language(user_instruction)
-        slug_words = [w for w in re.sub(r"[^a-zA-Z0-9\s]", "", user_instruction).split() if w.lower() not in ["write", "code", "create", "build", "make", "in", "for", "please", "friday", "a", "an", "the"]]
+        slug_words = [w for w in re.sub(r"[^a-zA-Z0-9\s]", "", user_instruction).split() if w.lower() not in ["write", "code", "create", "build", "make", "in", "for", "please", "friday", "a", "an", "the", "can", "you", "page", "web"]]
         project_title = " ".join(slug_words[:5]).title() if slug_words else "Full-Stack Application"
         
         # Adaptive focus detection
         ins_lower = user_instruction.lower()
         if any(k in ins_lower for k in ["ui", "frontend", "css", "html", "design", "landing", "dashboard", "page"]):
-            scope_focus = "Frontend UI/UX Excellence, modern layouts, micro-animations, glassmorphism, responsive grids."
+            scope_focus = "Frontend UI/UX Excellence, human-designed authentic aesthetics, micro-animations, interactive state management."
         elif any(k in ins_lower for k in ["backend", "api", "database", "sql", "fastapi", "server", "crud"]):
             scope_focus = "Backend robustness, secure API endpoints, transactional database queries, data schemas."
         else:
             scope_focus = "End-to-end Full-Stack harmony: unified frontend interfaces backed by resilient services."
 
-        ui_ux_pro_section = """- Palette: Cinematic Dark Luxury (Background: Deep Charcoal/Onyx #06090f, Primary Accent: Cyber Neon Cyan #37e0c4, Secondary: Royal Indigo #7aa2ff, Surface Cards: #0d131f).
-- Typography: Premium Modern Typography ('Outfit', 'Plus Jakarta Sans', system-ui) with fluid clamp() scale.
-- Styling Architecture: Modern CSS3 Custom Properties (:root), CSS Grid/Flexbox, backdrop-filter: blur(14px).
-- Interaction Design: Subtle micro-animations, button hover elevations, glow borders, responsive viewport layouts."""
+        ui_ux_pro_section = self.synthesize_design_tokens(user_instruction)
 
         tier_info = {
             "tier": "Tier 1: Principal CTO Architecture Profile",
@@ -270,7 +285,10 @@ class ClaudeCodeExecutor:
                 )
                 stdout, stderr = process.communicate(timeout=15)
                 if process.returncode == 0 and stdout.strip() and len(stdout.strip()) > 50:
-                    return True, stdout.strip(), "Claude Code CTO (UI/UX Pro)"
+                    if "<tool_call>" not in stdout and "<function=" not in stdout and ("```" in stdout or "<!DOCTYPE" in stdout.upper() or "<html" in stdout.lower()):
+                        return True, stdout.strip(), "Claude Code CTO (UI/UX Pro)"
+                    else:
+                        print("[Claude Code CTO]: Subprocess emitted tool call transcript. Auto-cascading to next tier...")
             except subprocess.TimeoutExpired:
                 if process:
                     try:
@@ -310,7 +328,8 @@ class ClaudeCodeExecutor:
                 )
                 stdout, stderr = process.communicate(timeout=20)
                 if process.returncode == 0 and stdout.strip() and len(stdout.strip()) > 50:
-                    return True, stdout.strip(), "RuFlow Multi-Agent Swarm (Open Base)"
+                    if "<tool_call>" not in stdout and "<function=" not in stdout and ("```" in stdout or "<!DOCTYPE" in stdout.upper() or "<html" in stdout.lower()):
+                        return True, stdout.strip(), "RuFlow Multi-Agent Swarm (Open Base)"
             except subprocess.TimeoutExpired:
                 if process:
                     try:
@@ -594,32 +613,13 @@ class AutonomousCodingEngine:
         if "<head" in code.lower() and "</head>" not in code.lower():
             code += "\n</head>\n"
 
-        # 3. If code was truncated before <body>, append a rich, styled modern UI body
-        if "<body" not in code.lower():
-            code += """
-<body>
-  <div style="min-height:100vh;background:#06090f;color:#e9eff7;font-family:'Outfit',system-ui,sans-serif;padding:clamp(2rem,6vw,5rem) clamp(1rem,4vw,3rem);box-sizing:border-box;">
-    <header style="max-width:1100px;margin:0 auto 4rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(120,150,180,0.15);padding-bottom:1.5rem;">
-      <div style="font-weight:800;font-size:1.4rem;letter-spacing:0.1em;color:#37e0c4;">F.R.I.D.A.Y. // OS</div>
-      <nav style="display:flex;gap:1.5rem;font-size:0.95rem;color:#93a1b3;"><a href="#menu" style="color:inherit;text-decoration:none;">Menu</a><a href="#about" style="color:inherit;text-decoration:none;">Specials</a><a href="#order" style="color:inherit;text-decoration:none;">Order Now</a></nav>
-    </header>
-    <main style="max-width:1100px;margin:0 auto;text-align:center;">
-      <div style="display:inline-block;padding:0.4rem 1rem;background:rgba(55,224,196,0.1);border:1px solid rgba(55,224,196,0.3);border-radius:999px;font-size:0.8rem;color:#37e0c4;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1.5rem;">Delicious Biryani Culinary Experience</div>
-      <h1 style="font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.1;margin:0 auto 1.5rem;background:linear-gradient(135deg,#ffffff,#ff9f43 60%,#ff5252);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Authentic Royal Dum Biryani</h1>
-      <p style="color:#93a1b3;font-size:clamp(1.1rem,1.8vw,1.35rem);max-width:700px;margin:0 auto 2.5rem;line-height:1.6;">Slow-cooked in handi pots with fragrant long-grain basmati rice, secret royal spices, and saffron essence.</p>
-      <div style="display:flex;gap:1rem;justify-content:center;margin-bottom:4rem;flex-wrap:wrap;">
-        <button style="background:linear-gradient(135deg,#ff9f43,#ee5253);color:#ffffff;font-weight:700;font-size:1rem;padding:0.9rem 2.2rem;border-radius:10px;border:none;cursor:pointer;box-shadow:0 12px 30px -10px rgba(255,159,67,0.6);">Order Online</button>
-        <button style="background:rgba(255,255,255,0.05);color:#e9eff7;font-weight:600;font-size:1rem;padding:0.9rem 2.2rem;border-radius:10px;border:1px solid rgba(120,150,180,0.3);cursor:pointer;">Explore Menu</button>
-      </div>
-    </main>
-  </div>
-</body>
-</html>
-"""
-        elif "</html>" not in code.lower():
-            if "</body>" not in code.lower():
+        # 3. Ensure </body> and </html> are cleanly closed
+        if "<body" in code.lower() and "</body>" not in code.lower():
+            code += "\n</body>\n"
+        if "</html>" not in code.lower():
+            if "</body>" not in code.lower() and "<body" in code.lower():
                 code += "\n</body>\n"
-            code += "</html>\n"
+            code += "\n</html>\n"
             
         return code
 
