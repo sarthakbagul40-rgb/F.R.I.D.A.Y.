@@ -91,8 +91,8 @@ class CommLinkEngine:
     def get_audio_devices(self) -> Dict[str, Any]:
         """Scans Windows audio endpoints and validates physical Hardware signatures."""
         try:
-            cmd = "powershell -Command \"Get-PnpDevice | Where-Object { $_.Class -in 'AudioEndpoint','Bluetooth' } | Select-Object FriendlyName, Status, InstanceId | ConvertTo-Json -Compress\""
-            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True, timeout=5)
+            cmd = ["powershell", "-NoProfile", "-NonInteractive", "-Command", "Get-PnpDevice | Where-Object { $_.Class -in 'AudioEndpoint','Bluetooth' } | Select-Object FriendlyName, Status, InstanceId | ConvertTo-Json -Compress"]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
             if res.returncode == 0 and res.stdout.strip():
                 data = json.loads(res.stdout.strip())
                 if isinstance(data, dict):

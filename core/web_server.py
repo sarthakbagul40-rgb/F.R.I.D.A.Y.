@@ -33,7 +33,7 @@ location_history = []
 # Whitelist of directories permitted for /api/download
 ALLOWED_DOWNLOAD_DIRS = [
     os.path.realpath(os.path.join(os.path.expanduser("~"), "Desktop")),
-    os.path.realpath(r"D:\FRIDAY_Projects"),
+    os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "FRIDAY_Projects")),
     os.path.realpath(static_dir)
 ]
 
