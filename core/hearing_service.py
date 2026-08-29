@@ -39,7 +39,7 @@ class SileroVADFilter:
             except Exception:
                 pass
 
-    def contains_speech(self, audio_data: sr.AudioData, threshold: float = 0.35) -> bool:
+    def contains_speech(self, audio_data: sr.AudioData, threshold: float = 0.10) -> bool:
         """Evaluates whether audio frame contains real human speech vs ambient room noise / keystrokes."""
         if not self.is_ready or self.model is None:
             return True
