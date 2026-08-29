@@ -47,76 +47,76 @@ def _get_pygame():
     return _PYGAME_AVAILABLE if _PYGAME_AVAILABLE else None
 
 
-# Catalog of Movie-Grade Multilingual Neural Voices
+# Catalog of Movie-Grade Multilingual Neural Voices (Shinobu Kocho Edition)
 VOICE_PROFILES: Dict[str, Dict[str, str]] = {
     "english_irish": {
-        "voice": "en-GB-SoniaNeural",  # High-projection, loud, sophisticated British/Irish FRIDAY
+        "voice": "en-US-AvaMultilingualNeural",  # Gentle, expressive, melodious natural feminine voice
         "rate": "+0%",
         "pitch": "+0Hz",
-        "volume": "+800%",
-        "desc": "British/Irish High-Clarity FRIDAY (Sonia)"
+        "volume": "+0%",
+        "desc": "Serene & Expressive Shinobu Persona (Ava)"
     },
     "english_british": {
-        "voice": "en-GB-SoniaNeural",  # Sophisticated British tone
+        "voice": "en-GB-SoniaNeural",
         "rate": "+0%",
         "pitch": "+0Hz",
-        "volume": "+800%",
-        "desc": "British Neural FRIDAY (Sonia)"
+        "volume": "+0%",
+        "desc": "British Neural (Sonia)"
     },
     "english_libby": {
-        "voice": "en-GB-LibbyNeural",  # Punchy, loud British tone
+        "voice": "en-GB-LibbyNeural",
         "rate": "+0%",
         "pitch": "+0Hz",
-        "volume": "+800%",
-        "desc": "British Loud & Punchy (Libby)"
+        "volume": "+0%",
+        "desc": "British Punchy (Libby)"
     },
     "multilingual_ava": {
-        "voice": "en-US-AvaMultilingualNeural",  # Conversational multilingual voice
+        "voice": "en-US-AvaMultilingualNeural",
         "rate": "+0%",
         "pitch": "+0Hz",
-        "volume": "+800%",
-        "desc": "Multilingual FRIDAY (Ava)"
+        "volume": "+0%",
+        "desc": "Multilingual Expressive (Ava)"
     },
     "multilingual_emma": {
         "voice": "en-US-EmmaMultilingualNeural",
         "rate": "+0%",
         "pitch": "+0Hz",
-        "volume": "+800%",
+        "volume": "+0%",
         "desc": "Conversational Multilingual (Emma)"
     },
     "english_movie": {
-        "voice": "en-GB-SoniaNeural",  # British / Irish FRIDAY
+        "voice": "en-US-AvaMultilingualNeural",
         "rate": "+0%",
         "pitch": "+0Hz",
-        "volume": "+800%",
-        "desc": "Cinematic British FRIDAY"
+        "volume": "+0%",
+        "desc": "Cinematic Natural Voice"
     },
     "hindi": {
-        "voice": "en-IN-NeerjaNeural",  # Natural, effortless conversational Hinglish & Indian English
-        "rate": "+3%",
+        "voice": "en-IN-NeerjaNeural",  # Fluent, melodic Indian Hinglish
+        "rate": "+2%",
         "pitch": "+0Hz",
-        "volume": "+800%",
-        "desc": "Natural Conversational Hinglish (Neerja)"
+        "volume": "+0%",
+        "desc": "Natural Fluent Hinglish (Neerja)"
     },
     "marathi": {
         "voice": "mr-IN-AarohiNeural",
         "rate": "+0%",
         "pitch": "+0Hz",
-        "volume": "+800%",
+        "volume": "+0%",
         "desc": "Native Marathi"
     },
     "hindi_native": {
-        "voice": "en-IN-NeerjaNeural",  # Dedicated smooth Indian Hinglish voice
-        "rate": "+3%",
-        "pitch": "+0Hz",
-        "volume": "+800%",
-        "desc": "Indian Hinglish (Neerja Standard)"
-    },
-    "hindi_devanagari": {
-        "voice": "hi-IN-SwaraNeural",  # Pure Devanagari Hindi voice
+        "voice": "en-IN-NeerjaNeural",
         "rate": "+2%",
         "pitch": "+0Hz",
-        "volume": "+800%",
+        "volume": "+0%",
+        "desc": "Indian Hinglish (Neerja)"
+    },
+    "hindi_devanagari": {
+        "voice": "hi-IN-SwaraNeural",
+        "rate": "+0%",
+        "pitch": "+0Hz",
+        "volume": "+0%",
         "desc": "Devanagari Hindi (Swara)"
     },
     "marathi_native": {
