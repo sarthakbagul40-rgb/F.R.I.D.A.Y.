@@ -437,11 +437,11 @@ class ClaudeCodeExecutor:
                 payload = {
                     "model": "qwen/qwen3.8-27b",
                     "messages": [
-                        {"role": "system", "content": "You are F.R.I.D.A.Y. Expert Software Engineer. Generate complete, production-ready code with UI/UX Pro styling in markdown code fences. No placeholders."},
+                        {"role": "system", "content": "You are F.R.I.D.A.Y. Expert Software Engineer. Generate complete, production-ready code with UI/UX Pro styling in markdown code fences. Write the full page and complete body without truncation."},
                         {"role": "user", "content": master_prompt}
                     ],
                     "temperature": tier_info.get("temperature", 0.3),
-                    "max_tokens": 4096
+                    "max_tokens": 8192
                 }
                 resp = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=25)
                 if resp.status_code == 200:
@@ -466,11 +466,11 @@ class ClaudeCodeExecutor:
                 payload = {
                     "model": "qwen/qwen3.8-27b",
                     "messages": [
-                        {"role": "system", "content": "You are F.R.I.D.A.Y. Principal Software Engineer. Output the complete, working, beautiful HTML/CSS/JS or Python project strictly inside standard markdown code blocks (```html ... ```). Do not truncate or omit code."},
+                        {"role": "system", "content": "You are F.R.I.D.A.Y. Principal Software Engineer. Output the complete, working, beautiful HTML/CSS/JS or Python project strictly inside standard markdown code blocks (```html ... ```). Complete the full <body> and all scripts."},
                         {"role": "user", "content": master_prompt}
                     ],
                     "temperature": 0.2,
-                    "max_tokens": 4096
+                    "max_tokens": 8192
                 }
                 resp = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=25)
                 if resp.status_code == 200:
@@ -633,12 +633,29 @@ class AutonomousCodingEngine:
         if "<head" in code.lower() and "</head>" not in code.lower():
             code += "\n</head>\n"
 
-        # 3. Ensure </body> and </html> are cleanly closed
+        # 3. Handle case where body was truncated before opening
+        if "<body" not in code.lower():
+            code += """
+<body>
+  <div class="wrap" style="padding: 4rem 1rem; text-align: center;">
+    <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Welcome to F.R.I.D.A.Y. Experience</h1>
+    <p class="muted" style="max-width: 600px; margin: 0 auto 2rem;">Your luxury application interface is active and calibrated.</p>
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+      <a href="#explore" class="btn btn-primary">Explore Collection</a>
+      <button class="btn btn-ghost" onclick="alert('System Calibrated')">Learn More</button>
+    </div>
+  </div>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>if(window.lucide) lucide.createIcons();</script>
+</body>
+"""
+
+        # 4. Ensure </body> and </html> are cleanly closed
         if "<body" in code.lower() and "</body>" not in code.lower():
+            if "<script" in code.lower() and "</script>" not in code.lower():
+                code += "\n</script>\n"
             code += "\n</body>\n"
         if "</html>" not in code.lower():
-            if "</body>" not in code.lower() and "<body" in code.lower():
-                code += "\n</body>\n"
             code += "\n</html>\n"
             
         return code

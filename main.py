@@ -2077,10 +2077,10 @@ if __name__ == "__main__":
                 except queue.Empty:
                     continue
                 
-                # Check for hesitation continuation (snappy 150ms timeout)
-                while is_trailing_incomplete(command):
+                # Allow smooth continuation for natural multi-word commands (0.65s buffer)
+                while is_trailing_incomplete(command) or (len(command.split()) < 4 and not audio_queue.empty()):
                     try:
-                        next_chunk = audio_queue.get(timeout=0.20)
+                        next_chunk = audio_queue.get(timeout=0.65)
                         if next_chunk:
                             command = f"{command} {next_chunk}".strip()
                     except Exception:
@@ -2091,10 +2091,10 @@ if __name__ == "__main__":
                 neural_voice_engine.wait_until_done()
                 drain_audio_queues()
             else:
-                # Check for hesitation continuation on direct wake+command (snappy 150ms timeout)
-                while is_trailing_incomplete(parsed_command):
+                # Allow smooth continuation on direct wake+command (0.65s buffer)
+                while is_trailing_incomplete(parsed_command) or (len(parsed_command.split()) < 4 and not audio_queue.empty()):
                     try:
-                        next_chunk = audio_queue.get(timeout=0.20)
+                        next_chunk = audio_queue.get(timeout=0.65)
                         if next_chunk:
                             parsed_command = f"{parsed_command} {next_chunk}".strip()
                     except Exception:

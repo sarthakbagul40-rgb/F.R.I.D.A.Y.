@@ -172,10 +172,10 @@ class CommLinkEngine:
         """Returns specialized acoustic parameters for Earbud vs PC Mic hearing."""
         if is_earbud:
             return {
-                "energy_threshold": 160,
-                "pause_threshold": 1.0,
-                "phrase_threshold": 0.30,
-                "non_speaking_duration": 0.50,
+                "energy_threshold": 150,
+                "pause_threshold": 1.4,
+                "phrase_threshold": 0.20,
+                "non_speaking_duration": 0.80,
                 "dynamic_energy_ratio": 1.4,
                 "damping": 0.20,
                 "sample_rate": 16000,
@@ -183,10 +183,10 @@ class CommLinkEngine:
             }
         else:
             return {
-                "energy_threshold": 280,
-                "pause_threshold": 1.1,
-                "phrase_threshold": 0.30,
-                "non_speaking_duration": 0.50,
+                "energy_threshold": 260,
+                "pause_threshold": 1.6,
+                "phrase_threshold": 0.20,
+                "non_speaking_duration": 0.85,
                 "dynamic_energy_ratio": 1.5,
                 "damping": 0.15,
                 "sample_rate": 16000,
