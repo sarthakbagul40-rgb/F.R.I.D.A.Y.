@@ -1,9 +1,38 @@
+# Virtual Environment & Python Cache
 .venv/
-.env
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# API Keys, Credentials & Secrets
+.env
+*.env
+.env.local
+.env.*.local
+
+# Personal Telemetry, Contacts & Memory Stores
+core/contacts.json
+core/memory_store.json
+core/memory_vault/
+core/mem0_storage/
+security_protocol/locations.json
+friday_notes.txt
+
+# Test Logs, Live Results & Temporary Files
+test_results_live.json
+*.log
 *.bak
+*.tmp
+*.mp3
+*.wav
 *.png
 simulation_screen.png
 test_screen.png
 jarvis_screen.png
+
+# Scratch & Temporary Directories
 scratch/
+friday_voice_cache/
+friday_voice_permanent_cache/
+

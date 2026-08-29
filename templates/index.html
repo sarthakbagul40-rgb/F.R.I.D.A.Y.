@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="theme-color" content="#030712">
+    <title>F.R.I.D.A.Y. // NEURAL TACTICAL HUD</title>
+    
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" href="/static/icon-192x192.png" type="image/png">
+    
+    <!-- UI/UX Pro Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Ambient Holographic Glow & Mesh Canvas -->
+    <div class="ambient-mesh"></div>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="app-layout">
+        <!-- SIDEBAR NAVIGATION / TELEMETRY (COLLAPSIBLE ON MOBILE) -->
+        <aside class="sidebar glass-panel">
+            <div class="sidebar-header">
+                <div class="arc-badge">
+                    <div class="arc-core"></div>
+                    <div class="arc-ring"></div>
+                </div>
+                <div class="sidebar-title">
+                    <h2>F.R.I.D.A.Y.</h2>
+                    <span>NEURAL HUD V7.0</span>
+                </div>
+            </div>
+
+            <!-- SYSTEM METRICS BENTO CARDS -->
+            <div class="bento-section">
+                <h3 class="section-tag">LIVE TELEMETRY</h3>
+                
+                <div class="bento-card">
+                    <div class="bento-card-header">
+                        <span class="bento-label">VOICE MATRIX</span>
+                        <span class="status-badge live">ONLINE</span>
+                    </div>
+                    <div class="bento-val cyan">OmniVoice Neural</div>
+                    <div class="bento-sub">Kerry Condon Tone (IE / HI / MR)</div>
+                </div>
+
+                <div class="bento-card">
+                    <div class="bento-card-header">
+                        <span class="bento-label">COGNITIVE TIERS</span>
+                        <span class="status-badge tier">5-TIER</span>
+                    </div>
+                    <div class="bento-val violet">OmniRoute + Gemini</div>
+                    <div class="bento-sub">Local Ollama CPU Failover</div>
+                </div>
+
+                <div class="bento-card">
+                    <div class="bento-card-header">
+                        <span class="bento-label">MEMORY ENGINE</span>
+                        <span class="status-badge mem">MEM0</span>
+                    </div>
+                    <div class="bento-val green">Qdrant Graph Active</div>
+                    <div class="bento-sub">Headroom Token Optimizer (80%)</div>
+                </div>
+
+                <div class="bento-card">
+                    <div class="bento-card-header">
+                        <span class="bento-label">SECURITY & GUARD</span>
+                        <span class="status-badge guard">LOCKED</span>
+                    </div>
+                    <div class="bento-val amber">Permission Gatekeeper</div>
+                    <div class="bento-sub">Multi-Drive I/O Safety Protocol</div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="link-status">
+                    <div class="pulse-indicator"></div>
+                    <span id="sidebar-status-text">SECURE UPLINK ESTABLISHED</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN TERMINAL HUD -->
+        <main class="main-terminal">
+            <!-- TOP BAR -->
+            <header class="hud-top-bar glass-panel">
+                <div class="top-bar-left">
+                    <div class="mobile-logo-group">
+                        <div class="arc-badge-mini"></div>
+                        <h1>F.R.I.D.A.Y. <span class="dim">// TERMINAL</span></h1>
+                    </div>
+                </div>
+
+                <div class="top-bar-right">
+                    <div class="voice-mode-pill">
+                        <span class="pill-dot"></span>
+                        <span id="active-voice-label">AUDIO: EMILY NEURAL</span>
+                    </div>
+                    <span id="status-indicator" class="connection-badge">UPLINK_STABLE</span>
+                </div>
+            </header>
+
+            <!-- QUICK COMMAND CHIPS -->
+            <section class="quick-actions-bar">
+                <button class="chip-btn" data-cmd="system status">
+                    <span class="chip-icon">⚡</span> System Diagnostics
+                </button>
+                <button class="chip-btn" data-cmd="take screenshot">
+                    <span class="chip-icon">📸</span> Take Screenshot
+                </button>
+                <button class="chip-btn" data-cmd="copy this">
+                    <span class="chip-icon">📋</span> Copy Selection to Notes
+                </button>
+                <button class="chip-btn" data-cmd="write a python script for modern responsive landing page">
+                    <span class="chip-icon">💻</span> UI/UX Coding Engine
+                </button>
+                <button class="chip-btn" data-cmd="what is today's top tech news">
+                    <span class="chip-icon">🌐</span> Global Tech News
+                </button>
+                <button class="chip-btn" data-cmd="Namaskar Friday, kasa kay?">
+                    <span class="chip-icon">🚩</span> Marathi Mode
+                </button>
+                <button class="chip-btn" data-cmd="Sun Friday, aaj ka kya plan hai?">
+                    <span class="chip-icon">🇮🇳</span> Hindi / Hinglish Mode
+                </button>
+            </section>
+
+            <!-- CHAT LOG STREAM -->
+            <div id="chat-container" class="chat-container">
+                <!-- Initial System Welcome -->
+                <div class="message system">
+                    <div class="msg-meta">
+                        <span class="msg-sender">[ F.R.I.D.A.Y. // NEURAL CORE ]</span>
+                        <span class="msg-time">ONLINE</span>
+                    </div>
+                    <div class="msg-bubble ai-bubble">
+                        <p>Systems are fully calibrated and operational, Boss. Voice matrices are tuned in cinematic Irish, conversational Hindi/Hinglish, and native Marathi. What is your directive?</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AUDIO FREQUENCY VISUALIZER -->
+            <div id="audio-wave" class="audio-wave-container hidden">
+                <div class="wave-track">
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span class="wave-label">FRIDAY SPEECH SYNTHESIS STREAMING...</span>
+            </div>
+
+            <!-- INPUT COMPOSER -->
+            <footer class="hud-input-bar glass-panel">
+                <div class="input-glow-frame">
+                    <div class="accent-beam"></div>
+                    <input type="text" id="chat-input" placeholder="Type a command or ask Friday anything..." autocomplete="off"/>
+                    <button id="send-btn" class="transmit-btn">
+                        <span>TRANSMIT</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- UI/UX Pro Back To Top Smooth Button -->
+    <button class="back-to-top" id="back-to-top-btn" aria-label="Back to Top">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
