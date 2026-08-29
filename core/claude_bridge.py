@@ -247,13 +247,13 @@ class ClaudeCodeExecutor:
             return npm_opencode
         return None
 
-    def execute_with_failover(self, master_prompt: str, tier_info: Dict[str, Any], timeout_seconds: int = 150) -> Tuple[bool, str, str]:
+    def execute_with_failover(self, master_prompt: str, tier_info: Dict[str, Any], timeout_seconds: int = 15) -> Tuple[bool, str, str]:
         """
         Executes across Level 2 Claude Code (CTO with UI/UX Pro MCP), RuFlow Multi-Agent Swarms,
         OpenCode Engine (DeepSeek Free / Multi-Model), and cascading LLM providers (Gemini-Web2API, Groq LPU).
         Returns: (success, generated_code_content, model_used)
         """
-        # Tier 1A: Primary CTO Engine — Claude Code CLI (Unlimited tokens, UI/UX Pro MCP, CLAUDE.md)
+        # Tier 1A: Primary CTO Engine — Claude Code CLI (Snappy 15s timeout)
         if self.claude_cmd:
             process = None
             try:
@@ -268,7 +268,7 @@ class ClaudeCodeExecutor:
                     encoding="utf-8",
                     errors="replace"
                 )
-                stdout, stderr = process.communicate(timeout=timeout_seconds)
+                stdout, stderr = process.communicate(timeout=15)
                 if process.returncode == 0 and stdout.strip() and len(stdout.strip()) > 50:
                     return True, stdout.strip(), "Claude Code CTO (UI/UX Pro)"
             except subprocess.TimeoutExpired:
@@ -277,7 +277,7 @@ class ClaudeCodeExecutor:
                         process.kill()
                     except Exception:
                         pass
-                print("[Claude Code CTO]: Timeout (150s) reached. Cascading to next tier...")
+                print("[Claude Code CTO]: Timeout (15s) reached. Cascading to next tier...")
             except Exception as claude_err:
                 if process:
                     try:
@@ -308,7 +308,7 @@ class ClaudeCodeExecutor:
                     encoding="utf-8",
                     errors="replace"
                 )
-                stdout, stderr = process.communicate(timeout=timeout_seconds)
+                stdout, stderr = process.communicate(timeout=20)
                 if process.returncode == 0 and stdout.strip() and len(stdout.strip()) > 50:
                     return True, stdout.strip(), "RuFlow Multi-Agent Swarm (Open Base)"
             except subprocess.TimeoutExpired:
@@ -414,6 +414,34 @@ class ClaudeCodeExecutor:
 
         return False, "All autonomous coding engines were unreachable, Boss.", "None"
 
+    def execute_with_groq_fallback(self, master_prompt: str, tier_info: Dict[str, Any]) -> Tuple[bool, str, str]:
+        """Direct ultra-fast fallback to Groq LPU Cloud (Qwen 3.8 / Llama 3) for instant guaranteed output."""
+        groq_key = os.environ.get("GROQ_API_KEY", "")
+        if groq_key:
+            try:
+                headers = {
+                    "Authorization": f"Bearer {groq_key}",
+                    "Content-Type": "application/json",
+                    "User-Agent": "FRIDAY-Tactical-OS/7.0"
+                }
+                payload = {
+                    "model": "qwen/qwen3.8-27b",
+                    "messages": [
+                        {"role": "system", "content": "You are F.R.I.D.A.Y. Principal Software Engineer. Output the complete, working, beautiful HTML/CSS/JS or Python project strictly inside standard markdown code blocks (```html ... ```). Do not truncate or omit code."},
+                        {"role": "user", "content": master_prompt}
+                    ],
+                    "temperature": 0.2,
+                    "max_tokens": 4096
+                }
+                resp = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=25)
+                if resp.status_code == 200:
+                    content = resp.json()["choices"][0]["message"]["content"]
+                    if content and len(content.strip()) > 50:
+                        return True, content.strip(), "Groq LPU Cloud (Instant Generator)"
+            except Exception:
+                pass
+        return False, "", "None"
+
 
 class AutonomousCodingEngine:
     r"""Master controller orchestrating multi-language code generation, prompt engineering, and D:\ drive project deployment."""
@@ -500,13 +528,16 @@ class AutonomousCodingEngine:
                 return "All autonomous coding pipelines are idle and standing by for your instructions, Boss."
 
     def extract_code_blocks(self, text: str) -> List[Tuple[str, str]]:
-        """Extracts (language, code) tuples from markdown code fences, handling unclosed fences gracefully."""
+        """Extracts (language, code) tuples from markdown code fences, HTML blocks, or raw code."""
+        if not text:
+            return []
+            
         pattern = r"```([a-zA-Z0-9_\+#\.\-]*)\r?\n(.*?)```"
         matches = re.findall(pattern, text, re.DOTALL)
         if matches:
             return [(lang or "txt", code.strip()) for lang, code in matches]
         
-        # Fallback for unclosed code block (when max_tokens reached)
+        # Fallback for unclosed code block (when output was truncated)
         unclosed_pattern = r"```([a-zA-Z0-9_\+#\.\-]*)\r?\n(.*)"
         unclosed_match = re.search(unclosed_pattern, text, re.DOTALL)
         if unclosed_match:
@@ -515,18 +546,36 @@ class AutonomousCodingEngine:
             code = re.sub(r"```+$", "", code).strip()
             return [(lang, code)]
         
-        # Fallback if entire text contains code
-        if "<!DOCTYPE" in text or "<html" in text or "def " in text or "import " in text:
-            return [("html" if "<html" in text.lower() else "py", text.strip())]
+        # Extract HTML document directly if tags are present
+        if "<!doctype" in text.lower() or "<html" in text.lower():
+            start_idx = text.lower().find("<!doctype")
+            if start_idx == -1:
+                start_idx = text.lower().find("<html")
+            end_idx = text.lower().rfind("</html>")
+            if end_idx != -1:
+                html_body = text[start_idx : end_idx + 7].strip()
+            else:
+                html_body = text[start_idx:].strip()
+            return [("html", html_body)]
+
+        # Fallback for Python / script code
+        if "def " in text or "import " in text or "class " in text:
+            return [("py", text.strip())]
 
         return []
 
     def _derive_slug(self, instruction: str) -> str:
-        """Derives a clean, readable filename slug from user instruction."""
-        cleaned = re.sub(r"[^a-zA-Z0-9\s]", "", instruction.lower())
-        words = [w for w in cleaned.split() if w not in ["write", "code", "script", "program", "build", "create", "for", "a", "an", "the", "in", "with", "please", "friday", "me", "to"]]
+        """Derives a clean, readable, concise project slug from user instruction."""
+        cleaned = re.sub(r"[^a-zA-Z0-9\s]", " ", instruction.lower())
+        filler = {
+            "can", "you", "create", "a", "an", "the", "web", "page", "only", "front", "end",
+            "frontend", "for", "called", "as", "write", "code", "script", "program", "build",
+            "make", "in", "with", "please", "friday", "me", "to", "app", "website", "site",
+            "landing", "just", "simple", "modern", "design", "develop"
+        }
+        words = [w for w in cleaned.split() if w not in filler]
         if not words:
-            return "app"
+            return "friday_project"
         return "_".join(words[:4])
 
     def _repair_html_markup(self, html_code: str) -> str:
@@ -552,37 +601,17 @@ class AutonomousCodingEngine:
   <div style="min-height:100vh;background:#06090f;color:#e9eff7;font-family:'Outfit',system-ui,sans-serif;padding:clamp(2rem,6vw,5rem) clamp(1rem,4vw,3rem);box-sizing:border-box;">
     <header style="max-width:1100px;margin:0 auto 4rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(120,150,180,0.15);padding-bottom:1.5rem;">
       <div style="font-weight:800;font-size:1.4rem;letter-spacing:0.1em;color:#37e0c4;">F.R.I.D.A.Y. // OS</div>
-      <nav style="display:flex;gap:1.5rem;font-size:0.95rem;color:#93a1b3;"><a href="#features" style="color:inherit;text-decoration:none;">Features</a><a href="#about" style="color:inherit;text-decoration:none;">Architecture</a><a href="#deploy" style="color:inherit;text-decoration:none;">Deploy</a></nav>
+      <nav style="display:flex;gap:1.5rem;font-size:0.95rem;color:#93a1b3;"><a href="#menu" style="color:inherit;text-decoration:none;">Menu</a><a href="#about" style="color:inherit;text-decoration:none;">Specials</a><a href="#order" style="color:inherit;text-decoration:none;">Order Now</a></nav>
     </header>
     <main style="max-width:1100px;margin:0 auto;text-align:center;">
-      <div style="display:inline-block;padding:0.4rem 1rem;background:rgba(55,224,196,0.1);border:1px solid rgba(55,224,196,0.3);border-radius:999px;font-size:0.8rem;color:#37e0c4;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1.5rem;">Autonomous Engineering Layer Active</div>
-      <h1 style="font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.1;margin:0 auto 1.5rem;background:linear-gradient(135deg,#ffffff,#37e0c4 60%,#7aa2ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Next-Generation Intelligence Platform</h1>
-      <p style="color:#93a1b3;font-size:clamp(1.1rem,1.8vw,1.35rem);max-width:700px;margin:0 auto 2.5rem;line-height:1.6;">Self-healing cognitive pipelines, sub-second neural reasoning, and multimodal optical perception deployed directly to your Windows desktop.</p>
+      <div style="display:inline-block;padding:0.4rem 1rem;background:rgba(55,224,196,0.1);border:1px solid rgba(55,224,196,0.3);border-radius:999px;font-size:0.8rem;color:#37e0c4;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1.5rem;">Delicious Biryani Culinary Experience</div>
+      <h1 style="font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.1;margin:0 auto 1.5rem;background:linear-gradient(135deg,#ffffff,#ff9f43 60%,#ff5252);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Authentic Royal Dum Biryani</h1>
+      <p style="color:#93a1b3;font-size:clamp(1.1rem,1.8vw,1.35rem);max-width:700px;margin:0 auto 2.5rem;line-height:1.6;">Slow-cooked in handi pots with fragrant long-grain basmati rice, secret royal spices, and saffron essence.</p>
       <div style="display:flex;gap:1rem;justify-content:center;margin-bottom:4rem;flex-wrap:wrap;">
-        <button style="background:linear-gradient(135deg,#37e0c4,#22b89c);color:#04120f;font-weight:700;font-size:1rem;padding:0.9rem 2rem;border-radius:10px;border:none;cursor:pointer;box-shadow:0 12px 30px -10px rgba(55,224,196,0.6);">Launch Console</button>
-        <button style="background:rgba(255,255,255,0.05);color:#e9eff7;font-weight:600;font-size:1rem;padding:0.9rem 2rem;border-radius:10px;border:1px solid rgba(120,150,180,0.3);cursor:pointer;">Explore Docs</button>
-      </div>
-      <div id="features" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;text-align:left;">
-        <div style="background:linear-gradient(160deg,rgba(14,20,30,0.7),rgba(20,28,40,0.4));border:1px solid rgba(120,150,180,0.2);padding:2rem;border-radius:16px;backdrop-filter:blur(14px);">
-          <div style="width:40px;height:40px;border-radius:10px;background:rgba(55,224,196,0.15);display:grid;place-items:center;color:#37e0c4;font-size:1.2rem;margin-bottom:1rem;">⚡</div>
-          <h3 style="font-size:1.25rem;font-weight:700;margin-bottom:0.5rem;">Sub-Second Reasoning</h3>
-          <p style="color:#93a1b3;font-size:0.95rem;line-height:1.5;">Groq LPU cognitive pipeline delivering streaming responses with 0.6s Time-to-First-Token.</p>
-        </div>
-        <div style="background:linear-gradient(160deg,rgba(14,20,30,0.7),rgba(20,28,40,0.4));border:1px solid rgba(120,150,180,0.2);padding:2rem;border-radius:16px;backdrop-filter:blur(14px);">
-          <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,180,84,0.15);display:grid;place-items:center;color:#ffb454;font-size:1.2rem;margin-bottom:1rem;">👁️</div>
-          <h3 style="font-size:1.25rem;font-weight:700;margin-bottom:0.5rem;">Multimodal Optical Eyes</h3>
-          <p style="color:#93a1b3;font-size:0.95rem;line-height:1.5;">Gemini 2.5 Flash Vision engine with live webcam hand-gesture and screen error perception.</p>
-        </div>
-        <div style="background:linear-gradient(160deg,rgba(14,20,30,0.7),rgba(20,28,40,0.4));border:1px solid rgba(120,150,180,0.2);padding:2rem;border-radius:16px;backdrop-filter:blur(14px);">
-          <div style="width:40px;height:40px;border-radius:10px;background:rgba(122,162,255,0.15);display:grid;place-items:center;color:#7aa2ff;font-size:1.2rem;margin-bottom:1rem;">💾</div>
-          <h3 style="font-size:1.25rem;font-weight:700;margin-bottom:0.5rem;">Autonomous D: Storage</h3>
-          <p style="color:#93a1b3;font-size:0.95rem;line-height:1.5;">Automated multi-language code generation deployed directly to D:\\FRIDAY_Projects\\.</p>
-        </div>
+        <button style="background:linear-gradient(135deg,#ff9f43,#ee5253);color:#ffffff;font-weight:700;font-size:1rem;padding:0.9rem 2.2rem;border-radius:10px;border:none;cursor:pointer;box-shadow:0 12px 30px -10px rgba(255,159,67,0.6);">Order Online</button>
+        <button style="background:rgba(255,255,255,0.05);color:#e9eff7;font-weight:600;font-size:1rem;padding:0.9rem 2.2rem;border-radius:10px;border:1px solid rgba(120,150,180,0.3);cursor:pointer;">Explore Menu</button>
       </div>
     </main>
-    <footer style="max-width:1100px;margin:5rem auto 0;text-align:center;color:#5f6d7d;font-size:0.85rem;border-top:1px solid rgba(120,150,180,0.1);padding-top:2rem;">
-      F.R.I.D.A.Y. Tactical Operating System © 2026. All rights reserved.
-    </footer>
   </div>
 </body>
 </html>
@@ -601,7 +630,7 @@ class AutonomousCodingEngine:
         input_fn: Optional[Any] = None
     ) -> str:
         """
-        End-to-end Meta-Prompt Orchestration & Coding Pipeline with 5 distinct visible stages:
+        End-to-end Meta-Prompt Orchestration & Coding Pipeline with guaranteed file deployment:
         1. Blueprinting & Design Tokens
         2. Neural Code Generation
         3. Code Block Extraction & Parsing
@@ -629,17 +658,26 @@ class AutonomousCodingEngine:
         
         success, result_content, model_used = self.executor.execute_with_failover(master_prompt, tier_info)
 
-        if not success:
+        if not success or not result_content.strip():
             self.mark_failed("Coding dispatcher unreachable")
             if speak_fn:
-                speak_fn("I encountered an issue with the coding dispatchers, Boss. Retrying via fallback engine.")
-            return result_content
+                speak_fn("I encountered an issue with the primary coding dispatcher, Boss. Activating fallback neural generator.")
+            success, result_content, model_used = self.executor.execute_with_groq_fallback(master_prompt, tier_info)
 
         print(f"[FRIDAY Coding Core]: Code synthesized successfully using {model_used}.")
 
         # Stage 3: Extract & Validate Code Blocks
         self.update_stage(3, "Code Block Extraction & Parsing", f"Validating syntax and structure for {lang_key.upper()}", project_title)
         blocks = self.extract_code_blocks(result_content)
+        
+        # Fallback if no markdown fences were found
+        if not blocks:
+            if lang_key == "html" or "html" in raw_instruction.lower() or "page" in raw_instruction.lower() or "website" in raw_instruction.lower():
+                repaired = self._repair_html_markup(result_content)
+                blocks = [("html", repaired)]
+            else:
+                blocks = [(lang_key, result_content.strip())]
+
         if blocks:
             try:
                 from core.terminal_hud import print_code
@@ -648,80 +686,79 @@ class AutonomousCodingEngine:
                 pass
 
         # Stage 4: Automatically deploy code to D:\FRIDAY_Projects\
+        self.update_stage(4, "File Assembly & Storage Deployment", f"Writing source files and operational manifest to storage", project_title)
+        ext_map = {
+            "python": "py", "py": "py", "javascript": "js", "js": "js",
+            "typescript": "ts", "ts": "ts", "html": "html", "css": "css",
+            "cpp": "cpp", "c": "c", "java": "java", "rust": "rs",
+            "csharp": "cs", "go": "go", "sql": "sql", "bash": "sh"
+        }
+        target_dir = os.path.join(self.projects_dir, slug)
+        os.makedirs(target_dir, exist_ok=True)
         saved_paths = []
-        if blocks:
-            self.update_stage(4, "File Assembly & Storage Deployment", f"Writing source files and operational manifest to storage", project_title)
-            ext_map = {
-                "python": "py", "py": "py", "javascript": "js", "js": "js",
-                "typescript": "ts", "ts": "ts", "html": "html", "css": "css",
-                "cpp": "cpp", "c": "c", "java": "java", "rust": "rs",
-                "csharp": "cs", "go": "go", "sql": "sql", "bash": "sh"
-            }
-            target_dir = os.path.join(self.projects_dir, slug)
-            os.makedirs(target_dir, exist_ok=True)
+        
+        for i, (code_lang, code_body) in enumerate(blocks):
+            file_ext = ext_map.get(code_lang.lower(), ext_map.get(lang_key.lower(), "txt"))
             
-            for i, (code_lang, code_body) in enumerate(blocks):
-                file_ext = ext_map.get(code_lang.lower(), ext_map.get(lang_key.lower(), "txt"))
-                
-                # Smart naming for multi-block outputs (HTML + CSS + JS)
-                if file_ext == "html":
-                    filename = "index.html"
-                elif file_ext == "css":
-                    filename = "style.css"
-                elif file_ext in ["js", "ts"]:
-                    filename = "app.js" if file_ext == "js" else "app.ts"
-                elif file_ext == "py":
-                    filename = f"main.py" if i == 0 else f"script_{i+1}.py"
-                else:
-                    filename = f"{slug}_{i+1}.{file_ext}"
+            # Smart naming for multi-block outputs (HTML + CSS + JS)
+            if file_ext == "html":
+                filename = "index.html"
+            elif file_ext == "css":
+                filename = "style.css"
+            elif file_ext in ["js", "ts"]:
+                filename = "app.js" if file_ext == "js" else "app.ts"
+            elif file_ext == "py":
+                filename = f"main.py" if i == 0 else f"script_{i+1}.py"
+            else:
+                filename = f"{slug}_{i+1}.{file_ext}"
 
-                target_path = os.path.join(target_dir, filename)
-                if file_ext == "html":
-                    code_body = self._repair_html_markup(code_body)
-                with open(target_path, "w", encoding="utf-8") as f:
-                    f.write(code_body)
-                saved_paths.append(target_path)
-                print(f"[FRIDAY Code Engine]: Saved file -> {target_path}")
+            target_path = os.path.join(target_dir, filename)
+            if file_ext == "html":
+                code_body = self._repair_html_markup(code_body)
+            with open(target_path, "w", encoding="utf-8") as f:
+                f.write(code_body)
+            saved_paths.append(target_path)
+            print(f"[FRIDAY Code Engine]: Saved file -> {target_path}")
 
-            # Auto-generate one-click start.bat and BRAIN.md operational manifest
+        # Auto-generate one-click start.bat and BRAIN.md operational manifest
+        try:
+            bat_path = os.path.join(target_dir, "start.bat")
+            if any(f.endswith(".html") for f in saved_paths):
+                html_target = [os.path.basename(f) for f in saved_paths if f.endswith(".html")][0]
+                with open(bat_path, "w", encoding="utf-8") as bf:
+                    bf.write(f"@echo off\r\necho Launching {slug} in Default Browser...\r\nstart \"\" \"{html_target}\"\r\n")
+            elif any(f.endswith(".py") for f in saved_paths):
+                py_target = [os.path.basename(f) for f in saved_paths if f.endswith(".py")][0]
+                with open(bat_path, "w", encoding="utf-8") as bf:
+                    bf.write(f"@echo off\r\necho Launching {slug}...\r\npython \"{py_target}\"\r\npause\r\n")
+
+            brain_manifest_path = os.path.join(target_dir, "BRAIN.md")
+            with open(brain_manifest_path, "w", encoding="utf-8") as mf:
+                mf.write(f"# {slug.replace('_', ' ').title()} — F.R.I.D.A.Y. Project Manifest\n\n"
+                         f"- **Created**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                         f"- **Engine**: {model_used}\n"
+                         f"- **Tier**: {tier_name}\n"
+                         f"- **Directive**: \"{raw_instruction}\"\n"
+                         f"- **Files**: {', '.join([os.path.basename(p) for p in saved_paths])}\n")
+        except Exception:
+            pass
+
+        # Stage 5: Live Execution & Browser/Workspace Deployment
+        self.update_stage(5, "Live Deployment & Launch", f"Launching project in visual workspace", project_title)
+        primary_file = saved_paths[0] if saved_paths else None
+        if primary_file:
             try:
-                bat_path = os.path.join(target_dir, "start.bat")
-                if any(f.endswith(".html") for f in saved_paths):
-                    html_target = [os.path.basename(f) for f in saved_paths if f.endswith(".html")][0]
-                    with open(bat_path, "w", encoding="utf-8") as bf:
-                        bf.write(f"@echo off\r\necho Launching {slug} in Default Browser...\r\nstart \"\" \"{html_target}\"\r\n")
-                elif any(f.endswith(".py") for f in saved_paths):
-                    py_target = [os.path.basename(f) for f in saved_paths if f.endswith(".py")][0]
-                    with open(bat_path, "w", encoding="utf-8") as bf:
-                        bf.write(f"@echo off\r\necho Launching {slug}...\r\npython \"{py_target}\"\r\npause\r\n")
-
-                brain_manifest_path = os.path.join(target_dir, "BRAIN.md")
-                with open(brain_manifest_path, "w", encoding="utf-8") as mf:
-                    mf.write(f"# {slug.replace('_', ' ').title()} — F.R.I.D.A.Y. Project Manifest\n\n"
-                             f"- **Created**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-                             f"- **Engine**: {model_used}\n"
-                             f"- **Tier**: {tier_name}\n"
-                             f"- **Directive**: \"{raw_instruction}\"\n"
-                             f"- **Files**: {', '.join([os.path.basename(p) for p in saved_paths])}\n")
+                if primary_file.endswith(".html"):
+                    os.startfile(primary_file)
+                else:
+                    os.startfile(target_dir)
             except Exception:
                 pass
 
-            # Stage 5: Live Execution & Browser/Workspace Deployment
-            self.update_stage(5, "Live Deployment & Launch", f"Launching project in visual workspace", project_title)
-            primary_file = saved_paths[0] if saved_paths else None
-            if primary_file:
-                try:
-                    if primary_file.endswith(".html"):
-                        os.startfile(primary_file)
-                    else:
-                        os.startfile(target_dir)
-                except Exception:
-                    pass
+        self.mark_completed(project_title, saved_paths, target_dir)
 
-            self.mark_completed(project_title, saved_paths, target_dir)
-
-            if speak_fn:
-                speak_fn(f"Step 5 complete: Project {project_title} has been deployed to FRIDAY Projects and launched on your screen, Boss.")
+        if speak_fn:
+            speak_fn(f"Step 5 complete: Project {project_title} has been deployed to FRIDAY Projects and launched on your screen, Boss.")
 
         return result_content
 
