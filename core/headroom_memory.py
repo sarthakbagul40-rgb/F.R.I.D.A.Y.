@@ -217,6 +217,15 @@ class HeadroomMemoryEngine:
         except Exception:
             pass
 
+    def get_swarm_preferences(self) -> str:
+        """Retrieves and formats Boss's recent recorded design and engineering preferences for swarm agents."""
+        with self.lock:
+            facts = self.data.get("learned_facts", [])
+            pref_facts = [f for f in facts if "preference" in f.lower() or "nuance" in f.lower() or "critique" in f.lower()]
+            if not pref_facts:
+                return "Boss prefers sleek, dark glassmorphism, responsive Tailwind CDN styling, clean modular code, and zero npm bloat."
+            return "\n".join(f"- {p}" for p in pref_facts[-5:])
+
     def consolidate_session_memory(self):
         """
         Sleep-Cycle Dual-Partition Memory Consolidation (Executed on Standby/Shutdown/Exit):

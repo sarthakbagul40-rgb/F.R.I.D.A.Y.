@@ -199,40 +199,33 @@ class PromptEngineeringSynthesizer:
 - REQUIRED COMPONENTS: Rich responsive layout, interactive states (:hover, :active), micro-animations, glassmorphic elevation layers, real authentic domain content with zero placeholder text.{f_aura_baseline}"""
 
     def synthesize_master_prompt(self, user_instruction: str) -> Tuple[str, Dict[str, Any]]:
-        """Compiles raw user command into UI/UX Pro Master Prompt in <1ms at 0 tokens."""
-        lang_key, lang_meta = self.detect_target_language(user_instruction)
-        slug_words = [w for w in re.sub(r"[^a-zA-Z0-9\s]", "", user_instruction).split() if w.lower() not in ["write", "code", "create", "build", "make", "in", "for", "please", "friday", "a", "an", "the", "can", "you", "page", "web"]]
-        project_title = " ".join(slug_words[:5]).title() if slug_words else "Full-Stack Application"
-        
-        # Adaptive focus detection
-        ins_lower = user_instruction.lower()
-        if lang_key == "fullstack":
-            scope_focus = "End-to-end Full-Stack harmony: Python FastAPI/SQLite backend paired with interactive F-Aura frontend."
-        elif any(k in ins_lower for k in ["ui", "frontend", "css", "html", "design", "landing", "dashboard", "page"]):
-            scope_focus = "Frontend UI/UX Excellence, human-designed authentic aesthetics, micro-animations, interactive state management."
-        elif any(k in ins_lower for k in ["backend", "api", "database", "sql", "fastapi", "server", "crud"]):
-            scope_focus = "Backend robustness, secure API endpoints, transactional database queries, data schemas."
-        else:
-            scope_focus = "End-to-end Full-Stack harmony: unified frontend interfaces backed by resilient services."
-
-        ui_ux_pro_section = self.synthesize_design_tokens(user_instruction)
+        """Compiles raw user command into Stitch-UX Neural Blueprint Master Prompt in <1ms at 0 tokens."""
+        try:
+            from core.agency_swarm import agency_swarm
+            from core.headroom_memory import memory_engine
+            user_prefs = memory_engine.get_swarm_preferences()
+            compiled_prompt = agency_swarm.synthesize_frontend_master_prompt(user_instruction, user_prefs)
+        except Exception:
+            ui_ux_pro_section = self.synthesize_design_tokens(user_instruction)
+            lang_key, lang_meta = self.detect_target_language(user_instruction)
+            slug_words = [w for w in re.sub(r"[^a-zA-Z0-9\s]", "", user_instruction).split() if w.lower() not in ["write", "code", "create", "build", "make", "in", "for", "please", "friday", "a", "an", "the", "can", "you", "page", "web"]]
+            project_title = " ".join(slug_words[:5]).title() if slug_words else "Full-Stack Application"
+            compiled_prompt = UNIVERSAL_FULLSTACK_MASTER_PROMPT.format(
+                project_title=project_title,
+                user_requirement=user_instruction,
+                tier_name="Tier 1: Principal CTO Architecture Profile",
+                lang_version=lang_meta["version"],
+                lang_standards=lang_meta["standards"],
+                scope_focus="Frontend UI/UX Excellence",
+                ui_ux_pro_section=ui_ux_pro_section
+            )
 
         tier_info = {
-            "tier": "Tier 1: Principal CTO Architecture Profile",
+            "tier": "Tier 1: Principal CTO Architecture Profile (Stitch-UX)",
             "primary_model": "Claude Code CTO (UI/UX Pro MCP)",
             "temperature": 0.2,
             "max_tokens": 8192
         }
-
-        compiled_prompt = UNIVERSAL_FULLSTACK_MASTER_PROMPT.format(
-            project_title=project_title,
-            user_requirement=user_instruction,
-            tier_name=tier_info["tier"],
-            lang_version=lang_meta["version"],
-            lang_standards=lang_meta["standards"],
-            scope_focus=scope_focus,
-            ui_ux_pro_section=ui_ux_pro_section
-        )
         return compiled_prompt, tier_info
 
 
@@ -303,7 +296,7 @@ class ClaudeCodeExecutor:
                     encoding="utf-8",
                     errors="replace"
                 )
-                stdout, stderr = process.communicate(timeout=15)
+                stdout, stderr = process.communicate(timeout=45)
                 if process.returncode == 0 and stdout.strip() and len(stdout.strip()) > 50:
                     if "<tool_call>" not in stdout and "<function=" not in stdout and ("```" in stdout or "<!DOCTYPE" in stdout.upper() or "<html" in stdout.lower()):
                         return True, stdout.strip(), "Claude Code CTO (UI/UX Pro)"
@@ -315,7 +308,7 @@ class ClaudeCodeExecutor:
                         process.kill()
                     except Exception:
                         pass
-                print("[Claude Code CTO]: Timeout (15s) reached. Cascading to next tier...")
+                print("[Claude Code CTO]: Timeout (45s) reached. Cascading to next tier...")
             except Exception as claude_err:
                 if process:
                     try:
@@ -435,7 +428,7 @@ class ClaudeCodeExecutor:
                     "User-Agent": "FRIDAY-Tactical-OS/7.0"
                 }
                 payload = {
-                    "model": "qwen/qwen3.8-27b",
+                    "model": "llama-3.3-70b-versatile",
                     "messages": [
                         {"role": "system", "content": "You are F.R.I.D.A.Y. Expert Software Engineer. Generate complete, production-ready code with UI/UX Pro styling in markdown code fences. Write the full page and complete body without truncation."},
                         {"role": "user", "content": master_prompt}
@@ -464,7 +457,7 @@ class ClaudeCodeExecutor:
                     "User-Agent": "FRIDAY-Tactical-OS/7.0"
                 }
                 payload = {
-                    "model": "qwen/qwen3.8-27b",
+                    "model": "llama-3.3-70b-versatile",
                     "messages": [
                         {"role": "system", "content": "You are F.R.I.D.A.Y. Principal Software Engineer. Output the complete, working, beautiful HTML/CSS/JS or Python project strictly inside standard markdown code blocks (```html ... ```). Complete the full <body> and all scripts."},
                         {"role": "user", "content": master_prompt}
@@ -851,6 +844,11 @@ class AutonomousCodingEngine:
             target_path = os.path.join(target_dir, filename)
             if file_ext == "html":
                 code_body = self._repair_html_markup(code_body, raw_instruction)
+                try:
+                    from core.agency_swarm import agency_swarm
+                    code_body = agency_swarm.audit_and_repair_markup(code_body, project_title)
+                except Exception:
+                    pass
             with open(target_path, "w", encoding="utf-8") as f:
                 f.write(code_body)
             saved_paths.append(target_path)
