@@ -430,7 +430,7 @@ HTML_CONTENT = """<!DOCTYPE html>
 </body>
 </html>"""
 
-target_path = r"D:\FRIDAY_Projects\one_fully_functional_e\index.html"
+target_path = os.path.join(os.path.splitdrive(os.getcwd())[0] + os.sep, "FRIDAY_Projects", "one_fully_functional_e", "index.html")
 os.makedirs(os.path.dirname(target_path), exist_ok=True)
 with open(target_path, "w", encoding="utf-8") as f:
     f.write(HTML_CONTENT)

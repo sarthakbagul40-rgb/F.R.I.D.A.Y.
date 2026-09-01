@@ -1148,7 +1148,7 @@ def handle_location(cmd):
     # Guard against queries asking about project storage or code files
     if any(w in clean_lower for w in ["it stored", "project stored", "code stored", "file stored", "saved", "projects folder", "my code", "my project"]):
         play_sound("launch")
-        proj_dir = os.path.realpath(os.path.join("D:\\", "FRIDAY_Projects")) if os.path.exists("D:\\") else os.path.join(os.path.expanduser("~"), "FRIDAY_Projects")
+        proj_dir = os.path.realpath(os.path.join(os.path.splitdrive(os.getcwd())[0] + os.sep, "FRIDAY_Projects"))
         os.makedirs(proj_dir, exist_ok=True)
         try:
             os.startfile(proj_dir)
@@ -1837,7 +1837,7 @@ def processCommand(c):
         ]
         if any(re.search(trig, cmd) for trig in project_status_triggers):
             if any(w in cmd for w in ["where is", "open project folder", "open projects folder", "folder", "stored", "saved"]):
-                proj_dir = os.path.realpath(os.path.join("D:\\", "FRIDAY_Projects")) if os.path.exists("D:\\") else os.path.join(os.path.expanduser("~"), "FRIDAY_Projects")
+                proj_dir = os.path.realpath(os.path.join(os.path.splitdrive(os.getcwd())[0] + os.sep, "FRIDAY_Projects"))
                 os.makedirs(proj_dir, exist_ok=True)
                 try:
                     os.startfile(proj_dir)
