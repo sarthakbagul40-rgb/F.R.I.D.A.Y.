@@ -47,56 +47,56 @@ def _get_pygame():
     return _PYGAME_AVAILABLE if _PYGAME_AVAILABLE else None
 
 
-# Catalog of Movie-Grade Multilingual Neural Voices (Shinobu Kocho Natural Edition)
+# Catalog of Movie-Grade Multilingual Neural Voices (Crisp, Charismatic & Confident Edition)
 VOICE_PROFILES: Dict[str, Dict[str, str]] = {
     "english_irish": {
-        "voice": "en-US-JennyNeural",  # Soft, gentle, sweet, warm feminine tone
-        "rate": "+0%",
-        "pitch": "+2Hz",
+        "voice": "en-US-AvaNeural",  # Crisp, confident, charismatic, highly natural feminine tone
+        "rate": "+4%",
+        "pitch": "+0Hz",
         "volume": "+0%",
-        "desc": "Gentle & Elegant Shinobu Persona (Jenny)"
+        "desc": "Crisp & Confident Charismatic Partner (Ava)"
     },
     "english_british": {
         "voice": "en-GB-MaisieNeural",
-        "rate": "+0%",
-        "pitch": "+1Hz",
+        "rate": "+2%",
+        "pitch": "+0Hz",
         "volume": "+0%",
-        "desc": "British Gentle (Maisie)"
+        "desc": "British Confident (Maisie)"
     },
     "english_libby": {
         "voice": "en-GB-LibbyNeural",
-        "rate": "+0%",
+        "rate": "+2%",
         "pitch": "+0Hz",
         "volume": "+0%",
         "desc": "British Punchy (Libby)"
     },
     "multilingual_ava": {
-        "voice": "en-US-JennyNeural",
-        "rate": "+0%",
-        "pitch": "+2Hz",
+        "voice": "en-US-AvaNeural",
+        "rate": "+4%",
+        "pitch": "+0Hz",
         "volume": "+0%",
-        "desc": "Gentle Multilingual (Jenny)"
+        "desc": "Crisp Multilingual (Ava)"
     },
     "multilingual_emma": {
         "voice": "en-US-EmmaMultilingualNeural",
-        "rate": "+0%",
-        "pitch": "+2Hz",
+        "rate": "+3%",
+        "pitch": "+0Hz",
         "volume": "+0%",
         "desc": "Conversational Multilingual (Emma)"
     },
     "english_movie": {
-        "voice": "en-US-JennyNeural",
-        "rate": "+0%",
-        "pitch": "+2Hz",
+        "voice": "en-US-AvaNeural",
+        "rate": "+4%",
+        "pitch": "+0Hz",
         "volume": "+0%",
-        "desc": "Cinematic Soft Tone"
+        "desc": "Cinematic Crisp Tone (Ava)"
     },
     "hindi": {
-        "voice": "en-IN-NeerjaExpressiveNeural",  # Expressive, playful, soft Indian English & Hinglish
-        "rate": "+1%",
-        "pitch": "+2Hz",
+        "voice": "en-IN-NeerjaExpressiveNeural",  # Expressive, lively, crisp Indian English & Hinglish
+        "rate": "+3%",
+        "pitch": "+0Hz",
         "volume": "+0%",
-        "desc": "Natural Expressive Hinglish (Neerja Expressive)"
+        "desc": "Crisp Expressive Hinglish (Neerja Expressive)"
     },
     "marathi": {
         "voice": "mr-IN-AarohiNeural",

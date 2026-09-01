@@ -1505,7 +1505,7 @@ def handle_coding_command(cmd):
     try:
         from core.claude_bridge import coding_engine
         play_sound("launch")
-        speak("Right away, Boss~ Initializing the autonomous engineering swarm now. Leave the architecture to me.")
+        speak("Right away, Boss. Initializing the autonomous engineering swarm now. Leave the architecture to me.")
         def _run_coding():
             coding_engine.handle_coding_request(cmd, speak_fn=speak, input_fn=input)
         threading.Thread(target=_run_coding, daemon=True).start()
