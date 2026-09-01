@@ -1891,16 +1891,21 @@ def processCommand(c):
             handle_project_status(cmd)
             return
 
-        # 3. Smart Autonomous Coding Intent Detection
-        coding_verbs = ["write", "create", "build", "make", "generate", "code", "program", "develop", "design", "craft", "banao", "bana do", "likho", "likh do"]
-        coding_targets = [
-            "html", "css", "website", "web page", "link page", "landing page", "front end", "frontend", "front-end",
-            "web app", "webapp", "page", "site", "script", "program", "app", "application", "python", "javascript",
-            "typescript", "rust", "cpp", "c++", "java", "code", "fastapi", "flask", "react", "dashboard", "ui", "interface",
-            "menu", "portfolio", "calculator", "game"
-        ]
+        # 3. Precision Autonomous Coding Intent Detection (Imperative Commands Only)
+        is_conversational_statement = any(phrase in cmd for phrase in [
+            "i am going to", "i will", "i'm going to", "i want to", "all nighter", "all-nighter",
+            "hours", "going to code", "let me code", "trying to code", "thinking of", "feel like"
+        ])
         is_question = any(q in cmd for q in ["how many", "how long", "what do you think", "can you tell me", "rebuild you", "build you", "days will it take"])
-        if not is_question and any(v in cmd for v in coding_verbs) and any(t in cmd for t in coding_targets):
+        
+        coding_imperative_patterns = [
+            r'\b(?:create|build|make|generate|write|develop|design|craft)\s+(?:me\s+)?(?:an?\s+)?(?:app|website|web\s+app|webapp|landing\s+page|script|program|code|dashboard|ui|interface|tool|portfolio|game|backend|frontend|fullstack|fastapi|flask|react)\b',
+            r'\b(?:code|program)\s+(?:me\s+)?(?:an?\s+)?(?:app|website|web\s+app|webapp|script|tool|game|dashboard|page|solution)\b',
+            r'\b(?:ek\s+)?(?:app|website|code|script|project)\s+(?:bana\s+do|banao|likh\s+do|likho)\b',
+            r'\b(?:claude\s+code|opencode|ruflow|autonomous\s+coder|coding\s+swarm)\b'
+        ]
+        
+        if not is_conversational_statement and not is_question and any(re.search(pat, cmd) for pat in coding_imperative_patterns):
             handle_coding_command(cmd)
             return
 
