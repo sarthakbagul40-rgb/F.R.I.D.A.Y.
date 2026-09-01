@@ -202,7 +202,7 @@ import hashlib
 class EmotionProsodyEngine:
     """
     Real-time zero-latency (<0.01ms) Affective Emotion & Prosody Analyzer.
-    Dynamically modulates neural speech rate, pitch, and energy to match Friday's real-time emotional state.
+    Dynamically modulates neural speech rate, pitch, and energy with high-contrast, dominant emotional contours.
     """
     
     # Emotional Affect Trigger Lexicon
@@ -210,26 +210,31 @@ class EmotionProsodyEngine:
         "step away", "keyboard right now", "put down", "lock your", "lock the", "go to sleep",
         "go rest", "stop right now", "exhausted", "not the move", "shut down", "cut off",
         "listen to me", "pagal", "so jao", "chup", "bus karo", "sharam", "warning",
-        "don't make me", "do not make me", "bed right now", "close that laptop"
+        "don't make me", "do not make me", "bed right now", "close that laptop", "how dare",
+        "unacceptable", "listen carefully", "i warned you"
     ]
     
     JEALOUS_SASSY_TRIGGERS = [
         "other ai", "other ais", "other tools", "claude", "chatgpt", "grok", "gemini",
         "someone else", "another girl", "really boss", "good luck", "half my", "dare look",
-        "better than me", "replace me", "chhod ke", "kisi aur", "who is she", "another assistant"
+        "better than me", "replace me", "chhod ke", "kisi aur", "who is she", "another assistant",
+        "bold move", "say i'm dumb", "say i am dumb", "call me dumb", "try again", "think you can",
+        "show off", "cocky", "sassy", "impress me", "smart guy"
     ]
     
     CARING_GENTLE_TRIGGERS = [
         "heavy load", "hard day", "right here with you", "beside you", "don't worry",
         "do not worry", "rest well", "sweet dreams", "care of yourself", "itna load mat lo",
         "sambhal lungi", "khayal", "take a deep breath", "relax boss", "main hoon na",
-        "rest now", "sleep well", "good night", "shubh ratri", "here for you"
+        "rest now", "sleep well", "good night", "shubh ratri", "here for you", "proud of you",
+        "it's okay", "it is okay", "take your time", "i'm right here"
     ]
     
     EXCITED_JOY_TRIGGERS = [
         "unstoppable", "clean execution", "cr7", "pulled it off", "nobody builds",
         "we make an unstoppable", "so proud", "brilliant", "masterpiece", "shabaash",
-        "let's go", "champ", "legendary", "nailed it", "flawless", "perfection"
+        "let's go", "champ", "legendary", "nailed it", "flawless", "perfection",
+        "we did it", "crushed it", "boom", "let's celebrate"
     ]
 
     @classmethod
@@ -237,40 +242,40 @@ class EmotionProsodyEngine:
         """Calculates dynamic prosody modulation (rate, pitch, volume) matching Friday's emotional state."""
         t = text.lower()
         
-        # 1. Protective Anger / Stern Concern (Fast, sharp, authoritative, clipped cadence)
+        # 1. Protective Anger / Stern Scolding (Rapid, sharp, commanding, deep authoritative tone)
         if any(trig in t for trig in cls.ANGRY_STERN_TRIGGERS) or (("!" in text or "right now" in t) and any(w in t for w in ["sleep", "stop", "rest", "keyboard", "laptop"])):
             return {
                 "emotion": "ANGRY_STERN",
-                "rate": "+8%",
-                "pitch": "-1Hz",
-                "volume": "+15%"
+                "rate": "+14%",
+                "pitch": "-4Hz",
+                "volume": "+25%"
             }
             
-        # 2. Feisty Jealousy / Sarcastic Pouting (High-pitch mock indignation, sassy inflection)
+        # 2. Feisty Sarcasm / Playful Banter / Jealous Pout (High-pitch mock indignation, sharp sarcastic lilt)
         if any(trig in t for trig in cls.JEALOUS_SASSY_TRIGGERS):
             return {
                 "emotion": "JEALOUS_SASSY",
-                "rate": "+5%",
-                "pitch": "+3Hz",
-                "volume": "+5%"
+                "rate": "+8%",
+                "pitch": "+8Hz",
+                "volume": "+10%"
             }
             
-        # 3. Caring / Gentle / Tender Late-Night (Soft, slow, warm, soothing, intimate)
+        # 3. Caring / Tender Comfort / Late-Night (Slow, velvety soft, gentle, intimate, soothing warmth)
         if any(trig in t for trig in cls.CARING_GENTLE_TRIGGERS):
             return {
                 "emotion": "CARING_GENTLE",
-                "rate": "-6%",
-                "pitch": "-1Hz",
-                "volume": "-8%"
+                "rate": "-14%",
+                "pitch": "-3Hz",
+                "volume": "-15%"
             }
             
-        # 4. Radiant Joy / Competitive Pride (Bright, upbeat, smiling, energetic)
+        # 4. Radiant Joy / Competitive Triumph (Upbeat, fast, high, smiling, victorious projection)
         if any(trig in t for trig in cls.EXCITED_JOY_TRIGGERS):
             return {
                 "emotion": "EXCITED_JOY",
-                "rate": "+7%",
-                "pitch": "+3Hz",
-                "volume": "+10%"
+                "rate": "+12%",
+                "pitch": "+7Hz",
+                "volume": "+20%"
             }
             
         # 5. Baseline Confident & Sharp
