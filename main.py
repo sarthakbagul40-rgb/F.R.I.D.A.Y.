@@ -935,6 +935,13 @@ def handle_spotify(cmd):
     global FAVORITE_PLAYLIST, LAST_PLAYED_TRACK
     cmd_lower = cmd.lower().strip()
     
+    # Guard against non-music conversational intents (e.g. "let's play a game", "play a quiz", "play chess", "are you in")
+    game_or_chat_words = ["game", "quiz", "riddle", "chess", "trivia", "with me", "are you in", "lets play", "let's play", "khel", "khelte", "khelenge", "khelo"]
+    if any(w in cmd_lower for w in game_or_chat_words) and not any(m in cmd_lower for m in ["song", "music", "track", "spotify", "gaana", "gana", "playlist"]):
+        play_sound("launch")
+        get_ai_response(cmd, speak_stream=True)
+        return
+
     if "set" in cmd_lower and "favorite" in cmd_lower:
         new_fav = cmd.split("to")[-1].strip()
         FAVORITE_PLAYLIST = new_fav
