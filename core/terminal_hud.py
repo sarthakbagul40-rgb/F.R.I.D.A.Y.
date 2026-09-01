@@ -38,7 +38,7 @@ def render_startup_banner():
     console.clear()
     
     title_text = Text(FRIDAY_ASCII, style="bold bright_cyan")
-    sub_title = Text("F.R.I.D.A.Y. // NEURAL TACTICAL OPERATING SYSTEM (v7.5)", style="bold bright_white")
+    sub_title = Text("F.R.I.D.A.Y. // NEURAL TACTICAL OPERATING SYSTEM (v9.0 APEX TRINITY)", style="bold bright_white")
     full_form = Text("FAST RESPONSIVE INTELLIGENT DIGITAL ASSISTANT YIELD", style="dim cyan")
     status_tag = Text("STATUS: ONLINE & ARMED   |   OPERATOR: BOSS", style="bold gold1")
     

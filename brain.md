@@ -1,6 +1,6 @@
 # F.R.I.D.A.Y. SYSTEM ARCHITECTURE & BRAIN DOCUMENTATION (`brain.md`)
 
-> **System Version:** V7.5 (Groq LPU + Gemini 2.5 Flash + Faster-Whisper Edition)  
+> **System Version:** V9.0 (The Apex Trinity Edition: Autonomous Swarm + Affective Emotion Prosody + Groq LPU)  
 > **Environment:** Windows 10/11 (x64)  
 > **Primary Role:** High-Speed Voice-First Cybernetic AI Partner & Automation OS  
 > **Codebase Health Score:** **`100 / 100`** (0 Syntax Errors, 0 Vulnerabilities, 0 Code Smells)
