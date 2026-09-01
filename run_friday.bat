@@ -27,9 +27,8 @@ if %errorlevel% neq 0 (
     echo [✓] Gemini-Web2API Bridge is active on port 8081.
 )
 
-echo [*] Starting F.R.I.D.A.Y. Master Terminal HUD ^& Neural Voice Engine...
-echo.
-"%PYTHON_EXE%" main.py
+set PYTHONWARNINGS=ignore
+"%PYTHON_EXE%" -W ignore main.py
 
 if %errorlevel% neq 0 (
     echo.

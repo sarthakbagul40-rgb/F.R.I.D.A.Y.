@@ -23,6 +23,11 @@ load_dotenv()
 
 # Suppress non-critical third-party library warnings and telemetry
 warnings.filterwarnings("ignore")
+warnings.simplefilter("ignore")
+warnings.filterwarnings("ignore", category=ResourceWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 os.environ["MEM0_TELEMETRY"] = "false"
 os.environ["POSTHOG_DISABLED"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
