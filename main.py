@@ -38,6 +38,11 @@ if sys.platform == "win32":
 
 import speech_recognition as sr
 
+try:
+    import pygetwindow as gw
+except ImportError:
+    gw = None
+
 IS_SPEAKING = False
 audio_queue = queue.Queue()
 
@@ -1818,7 +1823,9 @@ def processCommand(c):
 
         vision_screen_triggers = [
             "on my screen", "on screen", "on the screen", "read screen", "look at screen",
-            "check screen", "my display", "active display", "explain this error"
+            "check screen", "my display", "active display", "explain this error",
+            "scan my screen", "scan the screen", "scan screen", "scan display", "screen scan",
+            "analyse screen", "analyze screen"
         ]
         if any(trig in cmd for trig in vision_screen_triggers):
             handle_screen_vision(cmd)
@@ -1857,7 +1864,8 @@ def processCommand(c):
             "typescript", "rust", "cpp", "c++", "java", "code", "fastapi", "flask", "react", "dashboard", "ui", "interface",
             "menu", "portfolio", "calculator", "game"
         ]
-        if any(v in cmd for v in coding_verbs) and any(t in cmd for t in coding_targets):
+        is_question = any(q in cmd for q in ["how many", "how long", "what do you think", "can you tell me", "rebuild you", "build you", "days will it take"])
+        if not is_question and any(v in cmd for v in coding_verbs) and any(t in cmd for t in coding_targets):
             handle_coding_command(cmd)
             return
 
