@@ -18,6 +18,32 @@ os.environ["POSTHOG_DISABLED"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
 try:
+    from qdrant_client.local import qdrant_local
+    if hasattr(qdrant_local, "QdrantLocal"):
+        orig_close = getattr(qdrant_local.QdrantLocal, "close", None)
+        def _safe_local_close(self, *args, **kwargs):
+            try:
+                if orig_close:
+                    orig_close(self, *args, **kwargs)
+            except Exception:
+                pass
+        qdrant_local.QdrantLocal.close = _safe_local_close
+except Exception:
+    pass
+
+try:
+    import qdrant_client
+    if hasattr(qdrant_client, "QdrantClient"):
+        def _safe_client_del(self):
+            try:
+                self.close()
+            except Exception:
+                pass
+        qdrant_client.QdrantClient.__del__ = _safe_client_del
+except Exception:
+    pass
+
+try:
     from mem0 import Memory
 except ImportError:
     Memory = None
