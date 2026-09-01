@@ -47,21 +47,21 @@ def _get_pygame():
     return _PYGAME_AVAILABLE if _PYGAME_AVAILABLE else None
 
 
-# Catalog of Movie-Grade Multilingual Neural Voices (Shinobu Kocho Edition)
+# Catalog of Movie-Grade Multilingual Neural Voices (Shinobu Kocho Natural Edition)
 VOICE_PROFILES: Dict[str, Dict[str, str]] = {
     "english_irish": {
-        "voice": "en-US-AvaMultilingualNeural",  # Gentle, expressive, melodious natural feminine voice
+        "voice": "en-US-JennyNeural",  # Soft, gentle, sweet, warm feminine tone
         "rate": "+0%",
-        "pitch": "+0Hz",
+        "pitch": "+2Hz",
         "volume": "+0%",
-        "desc": "Serene & Expressive Shinobu Persona (Ava)"
+        "desc": "Gentle & Elegant Shinobu Persona (Jenny)"
     },
     "english_british": {
-        "voice": "en-GB-SoniaNeural",
+        "voice": "en-GB-MaisieNeural",
         "rate": "+0%",
-        "pitch": "+0Hz",
+        "pitch": "+1Hz",
         "volume": "+0%",
-        "desc": "British Neural (Sonia)"
+        "desc": "British Gentle (Maisie)"
     },
     "english_libby": {
         "voice": "en-GB-LibbyNeural",
@@ -71,51 +71,51 @@ VOICE_PROFILES: Dict[str, Dict[str, str]] = {
         "desc": "British Punchy (Libby)"
     },
     "multilingual_ava": {
-        "voice": "en-US-AvaMultilingualNeural",
+        "voice": "en-US-JennyNeural",
         "rate": "+0%",
-        "pitch": "+0Hz",
+        "pitch": "+2Hz",
         "volume": "+0%",
-        "desc": "Multilingual Expressive (Ava)"
+        "desc": "Gentle Multilingual (Jenny)"
     },
     "multilingual_emma": {
         "voice": "en-US-EmmaMultilingualNeural",
         "rate": "+0%",
-        "pitch": "+0Hz",
+        "pitch": "+2Hz",
         "volume": "+0%",
         "desc": "Conversational Multilingual (Emma)"
     },
     "english_movie": {
-        "voice": "en-US-AvaMultilingualNeural",
+        "voice": "en-US-JennyNeural",
         "rate": "+0%",
-        "pitch": "+0Hz",
+        "pitch": "+2Hz",
         "volume": "+0%",
-        "desc": "Cinematic Natural Voice"
+        "desc": "Cinematic Soft Tone"
     },
     "hindi": {
-        "voice": "en-IN-NeerjaNeural",  # Fluent, melodic Indian Hinglish
-        "rate": "+2%",
-        "pitch": "+0Hz",
+        "voice": "en-IN-NeerjaExpressiveNeural",  # Expressive, playful, soft Indian English & Hinglish
+        "rate": "+1%",
+        "pitch": "+2Hz",
         "volume": "+0%",
-        "desc": "Natural Fluent Hinglish (Neerja)"
+        "desc": "Natural Expressive Hinglish (Neerja Expressive)"
     },
     "marathi": {
         "voice": "mr-IN-AarohiNeural",
         "rate": "+0%",
-        "pitch": "+0Hz",
+        "pitch": "+1Hz",
         "volume": "+0%",
         "desc": "Native Marathi"
     },
     "hindi_native": {
-        "voice": "en-IN-NeerjaNeural",
-        "rate": "+2%",
-        "pitch": "+0Hz",
+        "voice": "en-IN-NeerjaExpressiveNeural",
+        "rate": "+1%",
+        "pitch": "+2Hz",
         "volume": "+0%",
-        "desc": "Indian Hinglish (Neerja)"
+        "desc": "Expressive Hinglish (Neerja)"
     },
     "hindi_devanagari": {
         "voice": "hi-IN-SwaraNeural",
         "rate": "+0%",
-        "pitch": "+0Hz",
+        "pitch": "+1Hz",
         "volume": "+0%",
         "desc": "Devanagari Hindi (Swara)"
     },
@@ -430,14 +430,14 @@ class NeuralVoiceEngine:
         self._play_audio_mci(file_path)
 
     async def _synthesize_edge_tts(self, text: str, voice_key: str, output_file: str):
-        """Synthesizes text using Edge-TTS neural stream with volume boost."""
+        """Synthesizes text using Edge-TTS neural stream with gentle, natural volume."""
         profile = VOICE_PROFILES.get(voice_key, VOICE_PROFILES["english_irish"])
         communicate = edge_tts.Communicate(
             text=text,
             voice=profile["voice"],
             rate=profile.get("rate", "+0%"),
             pitch=profile.get("pitch", "+0Hz"),
-            volume=profile.get("volume", "+800%")
+            volume=profile.get("volume", "+0%")
         )
         await communicate.save(output_file)
 
@@ -449,6 +449,11 @@ class NeuralVoiceEngine:
         # 0. Normalize Assistant Acronyms for natural pronunciation
         t = re.sub(r'\bF\.R\.I\.D\.A\.Y\.?\b', 'Friday', text, flags=re.IGNORECASE)
         t = re.sub(r'\bJ\.A\.R\.V\.I\.S\.?\b', 'Jarvis', t, flags=re.IGNORECASE)
+
+        # 0.1 Phonetic smoothing for Shinobu conversational cues
+        t = re.sub(r'\bara\s*ara\b', 'ah-ra, ah-ra', t, flags=re.IGNORECASE)
+        t = re.sub(r'\baara\s*aara\b', 'ah-ra, ah-ra', t, flags=re.IGNORECASE)
+        t = re.sub(r'\bmoshi\s*moshi\b', 'moshi moshi,', t, flags=re.IGNORECASE)
 
         # 1. Remove URLs
         t = re.sub(r"https?://\S+|www\.\S+", "website link", t)
