@@ -125,23 +125,47 @@ class HeadroomMemoryEngine:
         print("[Headroom Memory]: All persistent facts, projects, and dialogue memories formatted to factory state.")
 
     def auto_learn(self, user_msg: str) -> Optional[str]:
-        """Detects implicit or explicit remember commands and commits them."""
-        msg_lower = user_msg.lower().strip()
+        """Detects implicit or explicit remember commands and commits them with high precision."""
+        msg_clean = re.sub(r'\b(friday|jarvis)\b', '', user_msg, flags=re.IGNORECASE).strip()
+        msg_lower = msg_clean.lower()
         
-        # Explicit triggers: "remember that...", "remember:", "note that..."
-        triggers = [
+        # 1. Automatic Name Extraction
+        name_match = re.search(r'\bmy\s+name\s+is\s+([A-Za-z]+)\b', msg_clean, re.IGNORECASE)
+        if name_match:
+            real_name = name_match.group(1).capitalize()
+            self.data["user_profile"]["name"] = real_name
+            self.data["user_profile"]["real_name"] = real_name
+            fact_text = f"Boss's real name is {real_name}. Boss prefers to be addressed as 'Boss', but expects Friday to know his real name is {real_name}."
+            self.remember(fact_text, category="user_profile")
+            self.save()
+            return f"I have committed your real name ({real_name}) to long-term memory, Boss."
+
+        # 2. Suffix Remember Triggers: "..., can you remember it", "..., remember this"
+        suffix_triggers = [
+            r'^(.*?)(?:,\s*|\s+)(?:can\s+you\s+remember\s+(?:it|this)|remember\s+(?:it|this)|please\s+remember\s+(?:it|this))\b',
+            r'^(.*?)(?:,\s*|\s+)(?:don\'t\s+forget\s+(?:it|this)|keep\s+(?:this|it)\s+in\s+mind)\b'
+        ]
+        for pat in suffix_triggers:
+            m = re.search(pat, msg_clean, re.IGNORECASE)
+            if m:
+                extracted = m.group(1).strip()
+                if len(extracted) > 3:
+                    self.remember(extracted, category="user_instruction")
+                    return f"I have committed that to long-term memory, Boss: '{extracted}'"
+
+        # 3. Prefix Explicit Triggers: "remember that...", "remember:", "note that..."
+        prefix_triggers = [
             r"remember that\s+(.*)",
             r"remember:\s*(.*)",
             r"remember\s+(.*)",
             r"don't forget that\s+(.*)",
             r"keep in mind that\s+(.*)"
         ]
-        
-        for pat in triggers:
+        for pat in prefix_triggers:
             m = re.search(pat, msg_lower, re.IGNORECASE)
             if m:
-                extracted = user_msg[m.start(1):m.end(1)].strip()
-                if len(extracted) > 3:
+                extracted = msg_clean[m.start(1):m.end(1)].strip()
+                if len(extracted) > 3 and extracted.lower() not in ["it", "this"]:
                     self.remember(extracted, category="user_instruction")
                     return f"I have committed that to long-term memory, Boss: '{extracted}'"
                     
@@ -344,6 +368,9 @@ class HeadroomMemoryEngine:
         
         context_parts = [f"Current Time and Date: {now}."]
         
+        if self.data.get("user_profile"):
+            context_parts.append(f"\n[OPERATOR IDENTITY PROFILE]: {json.dumps(self.data['user_profile'])}")
+
         if combined_memories:
             context_parts.append("\n[PERSISTENT LONG-TERM MEMORY & CONTEXT (Proactively use to remind Boss if relevant)]:")
             for m in combined_memories:
