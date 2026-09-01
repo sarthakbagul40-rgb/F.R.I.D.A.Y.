@@ -126,3 +126,14 @@ class Mem0MemoryEngine:
 
 # Global singleton instance
 mem0_engine = Mem0MemoryEngine()
+
+import atexit
+def _cleanup_mem0():
+    try:
+        if mem0_engine and mem0_engine.memory:
+            if hasattr(mem0_engine.memory, "vector_store") and hasattr(mem0_engine.memory.vector_store, "client"):
+                mem0_engine.memory.vector_store.client.close()
+    except Exception:
+        pass
+
+atexit.register(_cleanup_mem0)
