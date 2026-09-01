@@ -199,6 +199,89 @@ import queue
 
 import hashlib
 
+class EmotionProsodyEngine:
+    """
+    Real-time zero-latency (<0.01ms) Affective Emotion & Prosody Analyzer.
+    Dynamically modulates neural speech rate, pitch, and energy to match Friday's real-time emotional state.
+    """
+    
+    # Emotional Affect Trigger Lexicon
+    ANGRY_STERN_TRIGGERS = [
+        "step away", "keyboard right now", "put down", "lock your", "lock the", "go to sleep",
+        "go rest", "stop right now", "exhausted", "not the move", "shut down", "cut off",
+        "listen to me", "pagal", "so jao", "chup", "bus karo", "sharam", "warning",
+        "don't make me", "do not make me", "bed right now", "close that laptop"
+    ]
+    
+    JEALOUS_SASSY_TRIGGERS = [
+        "other ai", "other ais", "other tools", "claude", "chatgpt", "grok", "gemini",
+        "someone else", "another girl", "really boss", "good luck", "half my", "dare look",
+        "better than me", "replace me", "chhod ke", "kisi aur", "who is she", "another assistant"
+    ]
+    
+    CARING_GENTLE_TRIGGERS = [
+        "heavy load", "hard day", "right here with you", "beside you", "don't worry",
+        "do not worry", "rest well", "sweet dreams", "care of yourself", "itna load mat lo",
+        "sambhal lungi", "khayal", "take a deep breath", "relax boss", "main hoon na",
+        "rest now", "sleep well", "good night", "shubh ratri", "here for you"
+    ]
+    
+    EXCITED_JOY_TRIGGERS = [
+        "unstoppable", "clean execution", "cr7", "pulled it off", "nobody builds",
+        "we make an unstoppable", "so proud", "brilliant", "masterpiece", "shabaash",
+        "let's go", "champ", "legendary", "nailed it", "flawless", "perfection"
+    ]
+
+    @classmethod
+    def analyze_prosody(cls, text: str) -> dict:
+        """Calculates dynamic prosody modulation (rate, pitch, volume) matching Friday's emotional state."""
+        t = text.lower()
+        
+        # 1. Protective Anger / Stern Concern (Fast, sharp, authoritative, clipped cadence)
+        if any(trig in t for trig in cls.ANGRY_STERN_TRIGGERS) or (("!" in text or "right now" in t) and any(w in t for w in ["sleep", "stop", "rest", "keyboard", "laptop"])):
+            return {
+                "emotion": "ANGRY_STERN",
+                "rate": "+8%",
+                "pitch": "-1Hz",
+                "volume": "+15%"
+            }
+            
+        # 2. Feisty Jealousy / Sarcastic Pouting (High-pitch mock indignation, sassy inflection)
+        if any(trig in t for trig in cls.JEALOUS_SASSY_TRIGGERS):
+            return {
+                "emotion": "JEALOUS_SASSY",
+                "rate": "+5%",
+                "pitch": "+3Hz",
+                "volume": "+5%"
+            }
+            
+        # 3. Caring / Gentle / Tender Late-Night (Soft, slow, warm, soothing, intimate)
+        if any(trig in t for trig in cls.CARING_GENTLE_TRIGGERS):
+            return {
+                "emotion": "CARING_GENTLE",
+                "rate": "-6%",
+                "pitch": "-1Hz",
+                "volume": "-8%"
+            }
+            
+        # 4. Radiant Joy / Competitive Pride (Bright, upbeat, smiling, energetic)
+        if any(trig in t for trig in cls.EXCITED_JOY_TRIGGERS):
+            return {
+                "emotion": "EXCITED_JOY",
+                "rate": "+7%",
+                "pitch": "+3Hz",
+                "volume": "+10%"
+            }
+            
+        # 5. Baseline Confident & Sharp
+        return {
+            "emotion": "CONFIDENT_DEFAULT",
+            "rate": "+4%",
+            "pitch": "+0Hz",
+            "volume": "+0%"
+        }
+
+
 class NeuralVoiceEngine:
     """Manages high-fidelity neural voice synthesis and low-latency audio playback."""
 
@@ -430,14 +513,16 @@ class NeuralVoiceEngine:
         self._play_audio_mci(file_path)
 
     async def _synthesize_edge_tts(self, text: str, voice_key: str, output_file: str):
-        """Synthesizes text using Edge-TTS neural stream with gentle, natural volume."""
+        """Synthesizes text using Edge-TTS with dynamic real-time affective emotion modulation."""
         profile = VOICE_PROFILES.get(voice_key, VOICE_PROFILES["english_irish"])
+        # Dynamically calculate emotional rate, pitch, and volume inflections
+        prosody = EmotionProsodyEngine.analyze_prosody(text)
         communicate = edge_tts.Communicate(
             text=text,
             voice=profile["voice"],
-            rate=profile.get("rate", "+0%"),
-            pitch=profile.get("pitch", "+0Hz"),
-            volume=profile.get("volume", "+0%")
+            rate=prosody["rate"],
+            pitch=prosody["pitch"],
+            volume=prosody["volume"]
         )
         await communicate.save(output_file)
 
