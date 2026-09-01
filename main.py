@@ -1702,9 +1702,43 @@ COMMANDS = {
     "maps": handle_location,
     "where is": handle_location,
     "location of": handle_location,
+    "what is on my screen": handle_vision_command,
+    "look at my screen": handle_vision_command,
+    "analyze my screen": handle_vision_command,
+    "screen analysis": handle_vision_command,
+    "deep research": handle_deep_research_command,
+    "deep search": handle_deep_research_command,
+    "research": handle_deep_research_command,
     "search": handle_search,
     "play": handle_spotify # Fallback play handles both
 }
+
+def handle_vision_command(cmd):
+    """Activates Pillar 1 Computer Vision cortex to analyze the user's active screen."""
+    try:
+        from core.vision_actuator import vision_actuator
+        play_sound("launch")
+        speak("Taking a look at your screen now, Boss~")
+        analysis = vision_actuator.analyze_screen(user_query=cmd or "Describe what is currently visible on my screen.")
+        speak(analysis)
+    except Exception as err:
+        print(f"[Vision Error]: {err}")
+        speak("I had trouble analyzing the screen display, Boss.")
+
+def handle_deep_research_command(cmd):
+    """Activates Pillar 3 Autonomous Headless Web Agent for deep multi-page research."""
+    try:
+        from core.browser_agent import browser_agent
+        play_sound("launch")
+        clean_q = re.sub(r"^(deep research|research|deep search|browse to|browse|scrape)\s*", "", cmd, flags=re.I).strip()
+        speak(f"Starting deep web research on {clean_q}, Boss~")
+        def _research():
+            briefing = browser_agent.deep_research(clean_q)
+            speak(briefing)
+        threading.Thread(target=_research, daemon=True).start()
+    except Exception as err:
+        print(f"[Deep Research Error]: {err}")
+        speak("I encountered an issue executing deep web research, Boss.")
 
 def handle_coding_command(cmd):
     """Directly dispatches the Multi-Agent Autonomous Coding Swarm (Claude Code CTO -> RuFlow -> OpenCode -> Gemini -> Groq LPU)."""
