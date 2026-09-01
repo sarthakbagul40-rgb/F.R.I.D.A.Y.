@@ -4,12 +4,37 @@ Performs deep web research, dynamic page scraping, JavaScript SPA data extractio
 and autonomous web interaction with zero cloud subscription cost.
 """
 
+import os
 import re
 import urllib.parse
+import subprocess
+import webbrowser
 from typing import Optional, Dict, Any, List
 import requests
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
+
+
+def open_in_brave(url: str) -> bool:
+    """Opens a target URL in Brave browser if available, or system default browser as fallback."""
+    brave_paths = [
+        r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
+        r"C:\Program Files (x86)\BraveSoftware\Brave-Browser\Application\brave.exe",
+        os.path.expandvars(r"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\Application\brave.exe")
+    ]
+    for p in brave_paths:
+        if os.path.exists(p):
+            try:
+                subprocess.Popen([p, url])
+                return True
+            except Exception:
+                pass
+    try:
+        webbrowser.open(url)
+        return True
+    except Exception as e:
+        print(f"[Browser Error]: {e}")
+        return False
 
 
 class AutonomousBrowserAgent:

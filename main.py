@@ -1416,11 +1416,77 @@ def handle_audio_health(cmd):
     speech = comm_link.get_health_speech()
     speak(speech)
 
+# --- VISION & OS ACTUATION HANDLERS (PILLAR 1) ---
+def handle_screen_vision(cmd):
+    """Activates Computer Vision cortex to analyze the user's active screen."""
+    try:
+        from core.vision_actuator import vision_actuator
+        play_sound("launch")
+        speak("Taking a look at your screen now, Boss~")
+        analysis = vision_actuator.analyze_screen(user_query=cmd or "Describe what is currently visible on my screen.")
+        speak(analysis)
+    except Exception as err:
+        print(f"[Vision Error]: {err}")
+        speak("I had trouble analyzing the screen display, Boss.")
+
+handle_vision_command = handle_screen_vision
+
+def handle_camera_vision(cmd):
+    """Activates live webcam/camera vision."""
+    try:
+        from core.vision_service import vision_engine
+        play_sound("launch")
+        speak("Accessing camera vision now, Boss~")
+        analysis = vision_engine.analyze_camera(cmd or "Describe what you see in front of the camera.")
+        speak(analysis)
+    except Exception as err:
+        print(f"[Camera Vision Error]: {err}")
+        speak("Camera feed is currently unavailable, Boss.")
+
+# --- DEEP WEB INTELLIGENCE HANDLER (PILLAR 3) ---
+def handle_deep_research_command(cmd):
+    """Activates Pillar 3 Autonomous Headless Web Agent for deep multi-page research."""
+    try:
+        from core.browser_agent import browser_agent
+        play_sound("launch")
+        clean_q = re.sub(r"^(deep research|research|deep search|browse to|browse|scrape)\s*", "", cmd, flags=re.I).strip()
+        speak(f"Starting deep web research on {clean_q}, Boss~")
+        def _research():
+            briefing = browser_agent.deep_research(clean_q)
+            speak(briefing)
+        threading.Thread(target=_research, daemon=True).start()
+    except Exception as err:
+        print(f"[Deep Research Error]: {err}")
+        speak("I encountered an issue executing deep web research, Boss.")
+
 # --- AUTONOMOUS CODING & CLAUDE CODE HANDLER ---
 def handle_coding_command(cmd):
-    """Processes natural language coding instructions via Prompt Synthesizer & Level 2 Claude Code CTO."""
-    play_sound("launch")
-    coding_engine.dispatch_coding_task_async(cmd, speak_fn=speak)
+    """Directly dispatches the Multi-Agent Autonomous Coding Swarm (Claude Code CTO -> RuFlow -> OpenCode -> Gemini -> Groq LPU)."""
+    try:
+        from core.claude_bridge import coding_engine
+        play_sound("launch")
+        speak("Right away, Boss~ Initializing the autonomous engineering swarm now. Leave the architecture to me.")
+        def _run_coding():
+            coding_engine.handle_coding_request(cmd, speak_fn=speak, input_fn=input)
+        threading.Thread(target=_run_coding, daemon=True).start()
+    except Exception as err:
+        print(f"[Coding Command Dispatch Error]: {err}")
+        play_sound("error")
+        speak("I encountered an issue launching the autonomous coding swarm, Boss.")
+
+def handle_project_status(cmd):
+    """Reports the live progress and status of active/recent autonomous projects."""
+    try:
+        from core.claude_bridge import coding_engine
+        stage_num = coding_engine.current_stage
+        stage_title = coding_engine.stage_title
+        proj_title = coding_engine.project_title
+        if stage_num > 0 and stage_num < 5:
+            speak(f"We are currently in Stage {stage_num}: {stage_title} for {proj_title}, Boss. Progress is humming along nicely.")
+        else:
+            speak("All recent engineering projects are completed and deployed to your projects directory, Boss.")
+    except Exception:
+        speak("All system pipelines are operational, Boss.")
 
 # COMMAND DICTIONARY (Ordered by priority)
 COMMANDS = {
@@ -1712,61 +1778,6 @@ COMMANDS = {
     "search": handle_search,
     "play": handle_spotify # Fallback play handles both
 }
-
-def handle_vision_command(cmd):
-    """Activates Pillar 1 Computer Vision cortex to analyze the user's active screen."""
-    try:
-        from core.vision_actuator import vision_actuator
-        play_sound("launch")
-        speak("Taking a look at your screen now, Boss~")
-        analysis = vision_actuator.analyze_screen(user_query=cmd or "Describe what is currently visible on my screen.")
-        speak(analysis)
-    except Exception as err:
-        print(f"[Vision Error]: {err}")
-        speak("I had trouble analyzing the screen display, Boss.")
-
-def handle_deep_research_command(cmd):
-    """Activates Pillar 3 Autonomous Headless Web Agent for deep multi-page research."""
-    try:
-        from core.browser_agent import browser_agent
-        play_sound("launch")
-        clean_q = re.sub(r"^(deep research|research|deep search|browse to|browse|scrape)\s*", "", cmd, flags=re.I).strip()
-        speak(f"Starting deep web research on {clean_q}, Boss~")
-        def _research():
-            briefing = browser_agent.deep_research(clean_q)
-            speak(briefing)
-        threading.Thread(target=_research, daemon=True).start()
-    except Exception as err:
-        print(f"[Deep Research Error]: {err}")
-        speak("I encountered an issue executing deep web research, Boss.")
-
-def handle_coding_command(cmd):
-    """Directly dispatches the Multi-Agent Autonomous Coding Swarm (Claude Code CTO -> RuFlow -> OpenCode -> Gemini -> Groq LPU)."""
-    try:
-        from core.claude_bridge import coding_engine
-        play_sound("launch")
-        speak("Right away, Boss~ Initializing the autonomous engineering swarm now. Leave the architecture to me.")
-        def _run_coding():
-            coding_engine.handle_coding_request(cmd, speak_fn=speak, input_fn=input)
-        threading.Thread(target=_run_coding, daemon=True).start()
-    except Exception as err:
-        print(f"[Coding Command Dispatch Error]: {err}")
-        play_sound("error")
-        speak("I encountered an issue launching the autonomous coding swarm, Boss.")
-
-def handle_project_status(cmd):
-    """Reports the live progress and status of active/recent autonomous projects."""
-    try:
-        from core.claude_bridge import coding_engine
-        stage_num = coding_engine.current_stage
-        stage_title = coding_engine.stage_title
-        proj_title = coding_engine.project_title
-        if stage_num > 0 and stage_num < 5:
-            speak(f"We are currently in Stage {stage_num}: {stage_title} for {proj_title}, Boss. Progress is humming along nicely.")
-        else:
-            speak("All recent engineering projects are completed and deployed to your projects directory, Boss.")
-    except Exception:
-        speak("All system pipelines are operational, Boss.")
 
 # Pre-compile command dispatch regexes once at startup for instant O(1) matching
 COMPILED_COMMANDS = [
