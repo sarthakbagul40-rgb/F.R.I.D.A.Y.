@@ -16,15 +16,15 @@ import tempfile
 import subprocess
 import shutil
 import ctypes
-from typing import Dict, List, Any
+from typing import Dict, Any, Optional
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich import box
 if sys.platform == "win32":
     try:
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
+        getattr(sys.stdout, "reconfigure", lambda **kw: None)(encoding="utf-8")
+        getattr(sys.stderr, "reconfigure", lambda **kw: None)(encoding="utf-8")
     except Exception:
         pass
 
@@ -45,7 +45,7 @@ IGNORED_DIRS = {".git", ".venv", "venv", "__pycache__", ".agents", "backups", "s
 class CodebaseAuditor:
     """Deep line-by-line source code and subsystem vulnerability auditor."""
 
-    def __init__(self, root_dir: str = None):
+    def __init__(self, root_dir: Optional[str] = None):
         if root_dir is None:
             self.root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         else:
@@ -114,7 +114,6 @@ class CodebaseAuditor:
         # 3. Subsystem Health Diagnostics
         omniroute_live = self.check_port(20128)
         gemini_live = self.check_port(8081)
-        flask_live = self.check_port(5000)
         cpu_pct = psutil.cpu_percent()
         ram_pct = psutil.virtual_memory().percent
         disk_pct = psutil.disk_usage(self.root_dir).percent
@@ -139,13 +138,11 @@ class CodebaseAuditor:
             minor_issues.append("Gemini-Web2API neural gateway on port 8081 is offline")
         if not omniroute_live:
             minor_issues.append("OmniRoute gateway is on standby (port 20128)")
-        if not flask_live:
-            minor_issues.append("Web HUD server is offline (port 5000)")
         if proc_mem_mb > 750:
             minor_issues.append(f"FRIDAY process RAM elevated at {proc_mem_mb} MB")
 
         # Health score calculation (100 base)
-        subsystem_penalty = (0 if gemini_live else 5) + (0 if omniroute_live else 4) + (0 if flask_live else 5)
+        subsystem_penalty = (0 if gemini_live else 5) + (0 if omniroute_live else 4)
         health_score = max(0, 100 - (len(syntax_errors) * 25) - (len(vulnerabilities) * 15) - (len(code_smells) * 1) - subsystem_penalty)
 
         return {
@@ -159,8 +156,7 @@ class CodebaseAuditor:
             "minor_issues": minor_issues,
             "subsystems": {
                 "OmniRoute Gateway (20128)": omniroute_live,
-                "Gemini-Web2API (8081)": gemini_live,
-                "Web HUD Server (5000)": flask_live
+                "Gemini-Web2API (8081)": gemini_live
             },
             "system_resources": {
                 "CPU Load": f"{cpu_pct}%",
@@ -306,24 +302,7 @@ class CodebaseAuditor:
         else:
             healed_actions.append("OmniRoute gateway verified online (port 20128)")
 
-        # 3. Self-Heal Web HUD Server on port 5000
-        if not self.check_port(5000):
-            try:
-                from core.web_server import run_web_server
-                import threading
-                t = threading.Thread(target=run_web_server, daemon=True)
-                t.start()
-                time.sleep(1.0)
-                if self.check_port(5000):
-                    healed_actions.append("Started Web HUD server on port 5000")
-                else:
-                    healed_actions.append("Initiated Web HUD server background thread")
-            except Exception as e:
-                healed_actions.append(f"Web HUD auto-start notice: {e}")
-        else:
-            healed_actions.append("Web HUD server verified online (port 5000)")
-
-        # 4. Trim FRIDAY Process Memory & Windows Working Set
+        # 3. Trim FRIDAY Process Memory & Windows Working Set
         try:
             proc = psutil.Process()
             mem_before = proc.memory_info().rss / (1024 * 1024)

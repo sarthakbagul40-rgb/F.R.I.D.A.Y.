@@ -1,0 +1,18 @@
+{
+  "include": [
+    "core",
+    "main.py"
+  ],
+  "exclude": [
+    "core/gemini_web2api",
+    ".venv",
+    "node_modules",
+    "graphify-out",
+    "backups",
+    "scratch"
+  ],
+  "venvPath": ".",
+  "venv": ".venv",
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": false
+}

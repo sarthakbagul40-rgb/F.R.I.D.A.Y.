@@ -6,11 +6,10 @@ window management, and UI mouse/keyboard automation.
 """
 
 import os
-import glob
 import time
 import subprocess
 from datetime import datetime
-from typing import List, Optional, Tuple, Dict, Any
+from typing import List, Optional, Any
 
 import psutil
 import pyautogui

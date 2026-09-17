@@ -6,6 +6,7 @@ Provides persistent cross-session memory, BM25 semantic retrieval, and context c
 import os
 import json
 import re
+import time
 import threading
 import atexit
 from datetime import datetime
@@ -31,8 +32,11 @@ class HeadroomMemoryEngine:
         
         self.session_imp_file = os.path.join(self.session_imp_dir, "session_records.json")
         self.evolution_file = os.path.join(self.evolution_dir, "evolution_journal.json")
+        self.instincts_file = os.path.join(self.evolution_dir, "instincts.json")
 
         self._scorer = None
+        self.lock = threading.Lock()
+        self.session_transcript: List[Dict[str, Any]] = []
         
         self.data: Dict[str, Any] = {
             "facts": [],            # List of {id, text, category, timestamp}
@@ -115,14 +119,63 @@ class HeadroomMemoryEngine:
         except Exception:
             pass
 
-        # Clear Mem0 / Vector store if present
-        try:
-            from core.mem0_service import mem0_engine
-            mem0_engine.reset()
-        except Exception:
-            pass
-
         print("[Headroom Memory]: All persistent facts, projects, and dialogue memories formatted to factory state.")
+
+    def get_living_dossier(self) -> Dict[str, Any]:
+        """
+        Retrieves the structured Living User Dossier:
+        Identity, Tech DNA, Media Taste, and Habits.
+        """
+        profile = self.data.get("user_profile", {})
+        return {
+            "identity": {
+                "name": profile.get("name", "Boss"),
+                "real_name": profile.get("real_name", profile.get("name", "")),
+                "role": profile.get("role", "Lead Software Architect & Visionary")
+            },
+            "tech_dna": profile.get("tech_dna", {
+                "languages": ["Python", "TypeScript", "JavaScript"],
+                "frameworks": ["FastAPI", "React", "Next.js"],
+                "tools": ["OpenCode", "VS Code", "Git"],
+                "architecture": "Honeycomb Micro-Kernel / Clean Modular Systems"
+            }),
+            "media_taste": profile.get("media_taste", {
+                "favorite_playlist": profile.get("favorite_playlist", "Signature Playlist"),
+                "preferred_playback": "MPV Named Pipe Native"
+            }),
+            "habits": profile.get("habits", {
+                "work_style": "Autonomous, iterative, rigorous verification",
+                "sleep_discipline": "Protective late-night sentinel active (02:30 AM curfew)",
+                "verification_protocol": "Max 2 self-healing retries before escalation"
+            })
+        }
+
+    def deduplicate_facts(self) -> int:
+        """
+        Automatic Deduplication Engine:
+        Normalizes facts, trims duplicate phrases, and resolves identical semantic facts.
+        Returns the count of pruned duplicate entries.
+        """
+        seen = set()
+        unique_facts = []
+        removed = 0
+        for item in self.data.get("facts", []):
+            raw_text = item.get("text", "").strip()
+            normalized = re.sub(r'[^\w\s]', '', raw_text.lower()).strip()
+            normalized = re.sub(r'\s+', ' ', normalized)
+            if normalized and normalized not in seen:
+                seen.add(normalized)
+                unique_facts.append(item)
+            else:
+                removed += 1
+
+        if removed > 0:
+            self.data["facts"] = unique_facts
+            for idx, fact in enumerate(self.data["facts"], 1):
+                fact["id"] = idx
+            self.save()
+            print(f"[Headroom Memory]: Cleaned and deduplicated {removed} redundant fact(s).")
+        return removed
 
     def auto_learn(self, user_msg: str) -> Optional[str]:
         """Detects implicit or explicit remember commands and commits them with high precision."""
@@ -208,13 +261,6 @@ class HeadroomMemoryEngine:
         # 1. Non-blocking real-time behavioral evolution & nuance extraction
         threading.Thread(target=self._live_evolution_worker, args=(user_text, assistant_text), daemon=True).start()
 
-        # 2. Non-blocking async background extraction of user facts into Mem0
-        try:
-            from core.mem0_service import mem0_engine
-            mem0_engine.add_conversation_async(user_text, assistant_text, user_id="boss")
-        except Exception:
-            pass
-
     def _live_evolution_worker(self, user_text: str, assistant_text: str):
         """Asynchronously extracts behavioral nuances, preferences, and feedback from every interaction in real-time."""
         u_lower = user_text.lower()
@@ -244,8 +290,13 @@ class HeadroomMemoryEngine:
     def get_swarm_preferences(self) -> str:
         """Retrieves and formats Boss's recent recorded design and engineering preferences for swarm agents."""
         with self.lock:
-            facts = self.data.get("learned_facts", [])
-            pref_facts = [f for f in facts if "preference" in f.lower() or "nuance" in f.lower() or "critique" in f.lower()]
+            raw_facts = self.data.get("facts", []) + self.data.get("learned_facts", [])
+            pref_facts = []
+            for item in raw_facts:
+                text = item.get("text", "") if isinstance(item, dict) else str(item)
+                t_lower = text.lower()
+                if any(k in t_lower for k in ["preference", "nuance", "critique", "prefer", "like"]):
+                    pref_facts.append(text)
             if not pref_facts:
                 return "Boss prefers sleek, dark glassmorphism, responsive Tailwind CDN styling, clean modular code, and zero npm bloat."
             return "\n".join(f"- {p}" for p in pref_facts[-5:])
@@ -325,7 +376,7 @@ class HeadroomMemoryEngine:
         with open(self.evolution_file, "w", encoding="utf-8") as f:
             json.dump(evolution_history, f, indent=2, ensure_ascii=False)
 
-        # Commit high-level facts into main memory store & Mem0
+        # Commit high-level facts into main memory store
         for task in sec1_data.get("completed_work", []):
             self.remember(f"Completed: {task}", category="project_history")
         for reminder in sec1_data.get("explicit_reminders", []):
@@ -333,6 +384,7 @@ class HeadroomMemoryEngine:
         for insight in sec2_data.get("boss_behavioral_insights", []):
             self.remember(f"Boss nuance: {insight}", category="user_nuance")
 
+        self.deduplicate_facts()
         self.session_transcript.clear()
         self.save()
         print(f"[Sleep-Cycle Memory Engine]: Dual-partition distillation complete.\n"
@@ -368,28 +420,150 @@ class HeadroomMemoryEngine:
         
         context_parts = [f"Current Time and Date: {now}."]
         
-        if self.data.get("user_profile"):
-            context_parts.append(f"\n[OPERATOR IDENTITY PROFILE]: {json.dumps(self.data['user_profile'])}")
+        # 2. Living User Dossier
+        dossier = self.get_living_dossier()
+        context_parts.append(
+            f"\n[LIVING OPERATOR DOSSIER]: Operator: {dossier['identity']['name']} "
+            f"({dossier['identity']['role']}) | Stack: {', '.join(dossier['tech_dna']['languages'])} | "
+            f"Tools: {', '.join(dossier['tech_dna']['tools'])}"
+        )
+
+        # 3. Progressive Hierarchical Context from Viking Vault (L0 Abstract)
+        try:
+            from core.viking_vault import viking_vault
+            l0_data = viking_vault.retrieve_context(domain="architecture", tier="L0")
+            if l0_data and l0_data.get("abstract"):
+                context_parts.append(f"\n[OPUS HIERARCHICAL CONTEXT (L0 Abstract)]: {l0_data['abstract']}")
+        except Exception:
+            pass
 
         if combined_memories:
             context_parts.append("\n[PERSISTENT LONG-TERM MEMORY & CONTEXT (Proactively use to remind Boss if relevant)]:")
             for m in combined_memories:
                 context_parts.append(f"- {m}")
                 
-        # 3. Attach recent conversation flow if present
+        # 4. Attach recent conversation flow if present
         if self.data["recent_dialogue"]:
             context_parts.append("\n[RECENT CONVERSATION HISTORY]:")
             for turn in self.data["recent_dialogue"][-3:]:
                 context_parts.append(f"User: {turn['user']}")
                 context_parts.append(f"FRIDAY: {turn['assistant']}")
                 
-        # 4. Attach F.R.I.D.A.Y.'s Autonomous Self-Evolution Directives
+        # 5. Attach F.R.I.D.A.Y.'s Autonomous Self-Evolution Directives
         evolution_ctx = self.get_latest_evolution_context()
         if evolution_ctx:
             context_parts.append(f"\n[F.R.I.D.A.Y. AUTONOMOUS EVOLUTION & BEHAVIORAL ALIGNMENT]:\n{evolution_ctx}")
 
         context_parts.append(f"\nUser Current Prompt: {current_prompt}")
         return "\n".join(context_parts)
+
+    # =====================================================================
+    # CONTINUOUS INSTINCTS ENGINE (ECC Continuous Learning Architecture)
+    # =====================================================================
+
+    def load_instincts(self) -> List[Dict[str, Any]]:
+        """Loads persistent developer instincts or initializes with core laws."""
+        default_instincts = [
+            {
+                "id": "instinct_apple_stripe_notion",
+                "category": "design",
+                "rule": "Default to Apple × Stripe × Notion clean light mode baseline with dual-theme ☀️/🌙 toggle, warm porcelain canvas (#fbfbfa), elevated pure white card, and Stripe indigo accents (#6366f1).",
+                "confidence": 1.0,
+                "source": "Boss Directive"
+            },
+            {
+                "id": "instinct_ponytail_yagni",
+                "category": "architecture",
+                "rule": "The Ponytail YAGNI Rule: Never write a line extra without informing the Boss. Zero unrequested features, 0 shopping carts, 0 fake reviews, 0 bloat.",
+                "confidence": 1.0,
+                "source": "Boss Directive"
+            },
+            {
+                "id": "instinct_the_easy_way",
+                "category": "tech_stack",
+                "rule": "The Easy Way: Always use the most simple, latest framework and zero-build dependencies (HTML5 + Tailwind CDN + Lucide icons) for tools unless complex web apps explicitly requested.",
+                "confidence": 1.0,
+                "source": "Boss Directive"
+            },
+            {
+                "id": "instinct_no_ai_tropes",
+                "category": "styling",
+                "rule": "Zero AI Tropes: Strictly ban background matrix grid lines (.bg-grid), floating neon blur balls (.glow-a, .glow-b), and radioactive neon green numbers.",
+                "confidence": 1.0,
+                "source": "Ralph Auditor"
+            }
+        ]
+
+        if not os.path.exists(self.instincts_file):
+            try:
+                os.makedirs(os.path.dirname(self.instincts_file), exist_ok=True)
+                with open(self.instincts_file, "w", encoding="utf-8") as f:
+                    json.dump(default_instincts, f, indent=2)
+                return default_instincts
+            except Exception:
+                return default_instincts
+
+        try:
+            with open(self.instincts_file, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+                return saved if isinstance(saved, list) else default_instincts
+        except Exception:
+            return default_instincts
+
+    def record_instinct(self, rule: str, category: str = "general", source: str = "User Feedback") -> Dict[str, Any]:
+        """Learns and records a new persistent coding instinct (ECC Continuous Learning standard)."""
+        instincts = self.load_instincts()
+        # Avoid exact duplicate rules
+        for item in instincts:
+            if item.get("rule", "").lower().strip() == rule.lower().strip():
+                item["confidence"] = min(item.get("confidence", 1.0) + 0.1, 2.0)
+                item["last_reinforced"] = datetime.now().isoformat()
+                with open(self.instincts_file, "w", encoding="utf-8") as f:
+                    json.dump(instincts, f, indent=2)
+                return item
+
+        new_instinct = {
+            "id": f"instinct_{int(time.time())}",
+            "category": category,
+            "rule": rule.strip(),
+            "confidence": 1.0,
+            "learned_at": datetime.now().isoformat(),
+            "source": source
+        }
+        instincts.append(new_instinct)
+        try:
+            with open(self.instincts_file, "w", encoding="utf-8") as f:
+                json.dump(instincts, f, indent=2)
+        except Exception as e:
+            print(f"[Instincts Error] Failed to save instinct: {e}")
+        return new_instinct
+
+    def export_instincts_markdown(self) -> str:
+        """Exports active developer instincts into standard markdown format for project rules."""
+        instincts = self.load_instincts()
+        lines = [
+            "# Developer Instincts & Architecture Laws",
+            "> Learned and reinforced from Boss's live feedback across sessions.\n"
+        ]
+        for idx, inst in enumerate(instincts, 1):
+            category = inst.get("category", "General").upper()
+            rule = inst.get("rule", "")
+            lines.append(f"{idx}. **[{category}]**: {rule}")
+        return "\n".join(lines)
+
+    def write_project_instincts(self, project_dir: str) -> str:
+        """Automatically injects active developer instincts into the project's .claude/rules/instincts.md."""
+        rules_dir = os.path.join(project_dir, ".claude", "rules")
+        os.makedirs(rules_dir, exist_ok=True)
+        target_path = os.path.join(rules_dir, "instincts.md")
+        content = self.export_instincts_markdown()
+        try:
+            with open(target_path, "w", encoding="utf-8") as f:
+                f.write(content)
+            return target_path
+        except Exception as e:
+            print(f"[Instincts Error] Could not write instincts.md: {e}")
+            return ""
 
     def compress_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """Zero-latency message passthrough without phantom import exceptions."""

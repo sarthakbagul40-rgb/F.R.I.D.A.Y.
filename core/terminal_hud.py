@@ -3,13 +3,10 @@ F.R.I.D.A.Y. Cybernetic Terminal HUD & UI/UX Engine
 Sleek, minimalist, high-contrast, and 100% glitch-free across all Windows Terminals.
 """
 
-import os
 import sys
-import psutil
 from datetime import datetime
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 from rich.text import Text
 from rich.syntax import Syntax
 from rich.align import Align
@@ -17,8 +14,8 @@ from rich import box
 
 if sys.platform == "win32":
     try:
-        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        getattr(sys.stdout, "reconfigure", lambda **kw: None)(encoding='utf-8', errors='replace')
+        getattr(sys.stderr, "reconfigure", lambda **kw: None)(encoding='utf-8', errors='replace')
     except Exception:
         pass
 
@@ -82,7 +79,7 @@ def print_code(code_str: str, language: str = "python"):
     console.print(p)
 
 
-def print_guard_request(action_desc: str) -> bool:
+def print_guard_request(action_desc: str) -> None:
     """Renders glowing amber safety gatekeeper alert."""
     alert_text = (
         f"[bold bright_yellow]PERMISSION REQUEST:[/bold bright_yellow]\n"

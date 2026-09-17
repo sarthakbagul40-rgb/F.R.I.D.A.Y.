@@ -9,19 +9,20 @@ Features:
 
 import os
 import re
-import sys
 import time
 import uuid
+import socket
 import asyncio
 import tempfile
 import threading
 import ctypes
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
 # Windows SAPI COM fallback
 import win32com.client as wincl
 import pythoncom
 
+edge_tts: Any = None
 try:
     import edge_tts
 except ImportError:
@@ -39,7 +40,7 @@ def _get_pygame():
     if _PYGAME_AVAILABLE is None:
         try:
             os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
-            import pygame
+            import pygame  # type: ignore
             pygame.mixer.init()
             _PYGAME_AVAILABLE = pygame
         except Exception:
@@ -303,12 +304,35 @@ class NeuralVoiceEngine:
         "Standby aborted, Boss."
     ]
 
+    @staticmethod
+    def _is_online() -> bool:
+        """Fast non-blocking connectivity check (<50ms)."""
+        try:
+            s = socket.create_connection(("8.8.8.8", 53), timeout=0.6)
+            s.close()
+            return True
+        except Exception:
+            return False
+
     def __init__(self):
         self.detector = LanguageProfileDetector()
         self.temp_dir = os.path.join(tempfile.gettempdir(), "friday_voice_cache")
         self.cache_dir = os.path.join(tempfile.gettempdir(), "friday_voice_permanent_cache")
         os.makedirs(self.temp_dir, exist_ok=True)
         os.makedirs(self.cache_dir, exist_ok=True)
+        
+        # Purge stale temp audio from previous sessions
+        try:
+            for f in os.listdir(self.temp_dir):
+                fp = os.path.join(self.temp_dir, f)
+                if os.path.isfile(fp):
+                    try:
+                        os.remove(fp)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
         self.lock = threading.Lock()
         self._sapi_speaker = None
         self._text_queue = queue.Queue()
@@ -329,6 +353,8 @@ class NeuralVoiceEngine:
     def _prewarm_cache(self):
         """Pre-caches standard affirmations and greetings in the background for zero-latency instant playback."""
         if not edge_tts:
+            return
+        if not self._is_online():
             return
         for phrase in self.COMMON_PHRASES:
             try:
@@ -375,6 +401,11 @@ class NeuralVoiceEngine:
 
         self._is_speaking_event.clear()
         self._active_voice_lock = None
+        try:
+            from core.media_engine import media_engine
+            media_engine.restore_volume()
+        except Exception:
+            pass
         time.sleep(0.01)
         self._interrupt_event.clear()
 
@@ -442,6 +473,12 @@ class NeuralVoiceEngine:
 
             temp_path, cleaned_text, completion_event, is_cached = item
             try:
+                try:
+                    from core.media_engine import media_engine
+                    media_engine.duck_volume(15)
+                except Exception:
+                    pass
+
                 if temp_path and os.path.exists(temp_path):
                     with self.lock:
                         self._play_audio_file(temp_path)
@@ -463,6 +500,11 @@ class NeuralVoiceEngine:
                 if self._text_queue.empty() and self._audio_queue.empty():
                     self._is_speaking_event.clear()
                     self._active_voice_lock = None
+                    try:
+                        from core.media_engine import media_engine
+                        media_engine.restore_volume()
+                    except Exception:
+                        pass
 
     def _get_sapi_fallback(self):
         """Thread-local Windows SAPI female voice fallback (Microsoft Zira)."""
@@ -522,6 +564,8 @@ class NeuralVoiceEngine:
         profile = VOICE_PROFILES.get(voice_key, VOICE_PROFILES["english_irish"])
         # Dynamically calculate emotional rate, pitch, and volume inflections
         prosody = EmotionProsodyEngine.analyze_prosody(text)
+        if edge_tts is None:
+            raise RuntimeError("edge_tts is not installed")
         communicate = edge_tts.Communicate(
             text=text,
             voice=profile["voice"],

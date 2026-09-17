@@ -3,14 +3,11 @@ F.R.I.D.A.Y. Neural Ear Sensors & Multilingual Hearing Engine
 Powered by Faster-Whisper (CTranslate2 INT8 CPU acceleration) with seamless Google STT fallback.
 """
 
-import os
 import io
 import re
-import wave
 import time
 import threading
 import speech_recognition as sr
-from typing import Optional, Tuple
 
 HAS_FASTER_WHISPER = True
 
@@ -32,8 +29,8 @@ class SileroVADFilter:
         except Exception:
             try:
                 import torch
-                model, _ = torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad', onnx=True)
-                self.model = model
+                hub_res = torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad', onnx=True)
+                self.model = hub_res[0] if isinstance(hub_res, (list, tuple)) else hub_res
                 self.is_ready = True
                 print("[Silero VAD v5]: Neural Speech Detector Online (Torch Hub).")
             except Exception:
@@ -90,6 +87,9 @@ class NeuralHearingEngine:
             "Hinglish, Hindi, English, Roman Urdu, Roman Hindi. F.R.I.D.A.Y., Friday, Jarvis, Boss. "
             "OpenCode, Claude Code, DeepSeek, Antigravity IDE, project status, about the project, "
             "kya chal raha hai, kahan tak pahuncha, kaam kahan tak pahuncha, progress update, "
+            "Stranger Things, Vincenzo, Game of Thrones, Breaking Bad, Squid Game, Peaky Blinders, "
+            "Dark, All of Us Are Dead, Money Heist, Narcos, The Boys, Season, Episode, Ep, "
+            "anime, full movie, trailer, stream, watch, play, "
             "kya haal hai, kaise ho, batao, samjhao, sunao, dikhao, play gaana, "
             "gaana bajao, gaana chalao, gaane sunao, kholo, band karo, roko, chalu karo, ruko, "
             "aaj ka mausam kaisa hai, taaza khabar batao, WhatsApp message bhejo, call karo, "
@@ -196,6 +196,22 @@ class NeuralHearingEngine:
         text = re.sub(r'\bdescribe\s+what\s+to\s+see\b', 'describe what you see', text, flags=re.IGNORECASE)
         text = re.sub(r'\bdescribe\s+what\s+you\s+are\s+seeing\b', 'describe what you see', text, flags=re.IGNORECASE)
 
+        # 8. Popular Cinema, K-Drama, and Show title phonetic repairs
+        text = re.sub(r'\b(titani|tight\s*anic|titannic|titan)\b(?=.*(?:movie|film|scene|song|ship|play|watch))', 'Titanic', text, flags=re.IGNORECASE)
+        text = re.sub(r'(?:play|watch|stream)\s+\b(titan|titani|tight\s*anic)\b', 'play Titanic', text, flags=re.IGNORECASE)
+        text = re.sub(r'\b(vin\s*cenzo|vincenso|vinsenzo|vinsanzo|winzenzo)\b', 'Vincenzo', text, flags=re.IGNORECASE)
+
+        # 9. Media, Anime Lore & Coding phonetic repairs (Acoustic drift compensation)
+        text = re.sub(r'\b(?:please|plz)\s+(?:play\s+)?(?=.*(?:starboy|the\s+weeknd|the\s+weekend|song|track|music|lofi|video|movie|episode|season))', 'play ', text, flags=re.IGNORECASE)
+        text = re.sub(r'\b(?:enemy\s+law|enemy\s+lover|animal\s+lover|enemy\s+lore|anime\s+law|any\s+lore|enemy\s+lord)\b', 'anime lore', text, flags=re.IGNORECASE)
+        text = re.sub(r'\b(?:built\s+and|built\s+an|build\s+and)\b', 'build an', text, flags=re.IGNORECASE)
+        text = re.sub(r'\blofi\s+be\b', 'lofi beats', text, flags=re.IGNORECASE)
+
+        # 10. System Status & Code question acoustic repairs
+        text = re.sub(r'\b(?:warriors\s+are|warrior\s+is)\b', 'where is our', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bwhatsapp\s+system(?:\s+status)?\b', 'what is our system status', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bwhat\s+is\s+a\s+system\b', 'what is our system status', text, flags=re.IGNORECASE)
+
         return text
 
     def enhance_audio_for_stt(self, audio_data: sr.AudioData) -> sr.AudioData:
@@ -236,16 +252,20 @@ class NeuralHearingEngine:
             socket.setdefaulttimeout(3.0) # Fast 3-second network limit prevents hanging queues
             # Tier 1: Lightning-fast Google STT (handles Hindi + English mixed natively)
             try:
-                raw_text = recognizer.recognize_google(proc_audio, language="en-IN")
-                if raw_text and len(raw_text.strip()) > 1:
-                    return self.normalize_phonetics(raw_text)
+                rec_fn = getattr(recognizer, "recognize_google", None)
+                if rec_fn:
+                    raw_text = rec_fn(proc_audio, language="en-IN")
+                    if raw_text and len(raw_text.strip()) > 1:
+                        return self.normalize_phonetics(raw_text)
             except Exception:
                 pass
 
             try:
-                raw_text = recognizer.recognize_google(proc_audio, language="en-US")
-                if raw_text and len(raw_text.strip()) > 1:
-                    return self.normalize_phonetics(raw_text)
+                rec_fn = getattr(recognizer, "recognize_google", None)
+                if rec_fn:
+                    raw_text = rec_fn(proc_audio, language="en-US")
+                    if raw_text and len(raw_text.strip()) > 1:
+                        return self.normalize_phonetics(raw_text)
             except Exception:
                 pass
         finally:
@@ -293,3 +313,136 @@ class NeuralHearingEngine:
 
 # Global singleton instance (CPU-optimized tiny model for zero-lag offline fallback)
 hearing_engine = NeuralHearingEngine(model_size="tiny")
+
+
+def start_speech_pipeline(audio_queue, raw_audio_queue, media_engine, neural_voice_engine, comm_link, play_sound_fn, is_speaking_fn=None, drain_fn=None):
+    """
+    Dedicated continuous audio ingestion pipeline:
+    - Dedicated mic worker with automatic Bluetooth earbud hot-swapping and acoustic calibration.
+    - 3 parallel transcription workers with sub-30ms Full-Duplex Barge-In and instant media pause.
+    """
+    def mic_capture_worker():
+        recognizer = sr.Recognizer()
+        current_mic_idx = None
+        current_is_earbud = None
+        mic_w = None
+
+        def init_or_switch_mic():
+            nonlocal mic_w, current_mic_idx, current_is_earbud
+            best_idx, best_name, is_earbud = comm_link.get_best_microphone_index()
+            if mic_w is not None and best_idx == current_mic_idx and is_earbud == current_is_earbud:
+                return mic_w
+            
+            profile = comm_link.get_acoustic_profile(is_earbud)
+            recognizer.pause_threshold = profile["pause_threshold"]
+            recognizer.phrase_threshold = profile["phrase_threshold"]
+            recognizer.non_speaking_duration = profile["non_speaking_duration"]
+            recognizer.dynamic_energy_ratio = profile["dynamic_energy_ratio"]
+            recognizer.dynamic_energy_adjustment_damping = profile["damping"]
+            recognizer.dynamic_energy_threshold = True
+
+            try:
+                if best_idx is not None:
+                    mic_w = sr.Microphone(device_index=best_idx, sample_rate=profile["sample_rate"])
+                else:
+                    mic_w = sr.Microphone(sample_rate=profile["sample_rate"])
+                with mic_w as source:
+                    recognizer.adjust_for_ambient_noise(source, duration=0.15)
+                    recognizer.energy_threshold = max(profile["energy_threshold"], min(recognizer.energy_threshold, profile["energy_threshold"] * 3))
+                current_mic_idx = best_idx
+                current_is_earbud = is_earbud
+                mode_str = "🎙️ Earbud In-Ear Mode (Enhanced Sensitivity)" if is_earbud else "💻 PC Room Mic Mode"
+                print(f"[Ear Sensors Active]: {mode_str} -> {best_name} (Energy: {recognizer.energy_threshold:.0f})")
+            except Exception:
+                try:
+                    mic_w = sr.Microphone()
+                    with mic_w as source:
+                        recognizer.adjust_for_ambient_noise(source, duration=0.15)
+                except Exception:
+                    mic_w = None
+            return mic_w
+
+        mic_w = init_or_switch_mic()
+        last_check_time = time.time()
+
+        while True:
+            try:
+                if not mic_w:
+                    mic_w = init_or_switch_mic()
+                    if not mic_w:
+                        time.sleep(0.5)
+                        continue
+                with mic_w as source:
+                    while True:
+                        try:
+                            if time.time() - last_check_time > 10.0:
+                                last_check_time = time.time()
+                                check_idx, _, check_earbud = comm_link.get_best_microphone_index()
+                                if check_idx != current_mic_idx or check_earbud != current_is_earbud:
+                                    init_or_switch_mic()
+                                    break
+
+                            p_limit = 3.5 if getattr(media_engine, 'is_playing', False) else 12.0
+                            audio = recognizer.listen(source, timeout=None, phrase_time_limit=p_limit)
+                            while raw_audio_queue.qsize() > 3:
+                                try:
+                                    raw_audio_queue.get_nowait()
+                                except Exception:
+                                    break
+                            try:
+                                raw_audio_queue.put_nowait((recognizer, audio))
+                            except Exception:
+                                pass
+                        except (sr.WaitTimeoutError, sr.UnknownValueError):
+                            continue
+                        except Exception:
+                            time.sleep(0.05)
+                            break
+            except Exception:
+                time.sleep(0.4)
+                mic_w = None
+
+    def transcription_worker():
+        while True:
+            try:
+                rec, audio_chunk = raw_audio_queue.get()
+                text = hearing_engine.transcribe_audio_frame(rec, audio_chunk)
+                if not text or len(text.strip()) <= 1:
+                    continue
+
+                if getattr(media_engine, 'is_playing', False):
+                    t_lower = text.lower().strip()
+                    media_interrupt_words = ["stop", "ruko", "pause", "band karo", "quiet", "mute", "chup", "shutup"]
+                    if any(w in t_lower for w in media_interrupt_words):
+                        print(f"\n[Instant Media Stop]: Intercepted '{text}' -> Halting playback immediately.")
+                        if play_sound_fn:
+                            play_sound_fn("cancel")
+                        media_engine.stop()
+                        if drain_fn:
+                            drain_fn()
+                        continue
+
+                speaking = neural_voice_engine.is_speaking() if neural_voice_engine else False
+                if is_speaking_fn:
+                    speaking = speaking or is_speaking_fn()
+                if speaking:
+                    t_lower = text.lower().strip()
+                    interrupt_words = ["stop", "ruko", "chup", "quiet", "wait", "shutup", "pause", "friday", "hold on", "cancel"]
+                    if any(w in t_lower for w in interrupt_words):
+                        print(f"\n[Barge-In]: Active speech interrupted by Boss ('{text}').")
+                        if play_sound_fn:
+                            play_sound_fn("cancel")
+                        if neural_voice_engine:
+                            neural_voice_engine.stop_immediate()
+                        if drain_fn:
+                            drain_fn()
+                    continue
+
+                audio_queue.put(text)
+            except Exception:
+                time.sleep(0.02)
+
+    t_mic = threading.Thread(target=mic_capture_worker, daemon=True)
+    t_mic.start()
+    for _ in range(3):
+        threading.Thread(target=transcription_worker, daemon=True).start()

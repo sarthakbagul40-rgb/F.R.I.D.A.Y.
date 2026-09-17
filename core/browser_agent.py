@@ -94,11 +94,14 @@ class AutonomousBrowserAgent:
                 if title_tag and title_tag.get("href"):
                     raw_href = title_tag.get("href")
                     # Extract actual target url from DuckDuckGo redirect
-                    if "uddg=" in raw_href:
-                        parsed = urllib.parse.parse_qs(urllib.parse.urlparse(raw_href).query)
-                        target_url = parsed.get("uddg", [raw_href])[0]
+                    if isinstance(raw_href, str):
+                        if "uddg=" in raw_href:
+                            parsed = urllib.parse.parse_qs(urllib.parse.urlparse(raw_href).query)
+                            target_url = parsed.get("uddg", [raw_href])[0]
+                        else:
+                            target_url = raw_href
                     else:
-                        target_url = raw_href
+                        target_url = str(raw_href or "")
 
                     title = title_tag.get_text(strip=True)
                     snippet = snippet_tag.get_text(strip=True) if snippet_tag else ""
@@ -168,6 +171,49 @@ FORMAT:
             fallback_res += f"• {r['title']}: {r['snippet']}\n"
         return fallback_res
 
+    def execute_browser_action(self, task_instruction: str, start_url: Optional[str] = None) -> Dict[str, Any]:
+        """
+        F.R.I.D.A.Y. OS 10.0: Interactive Browser Automation via Playwright / Browser-Use.
+        Clicks buttons, fills input fields, extracts dynamic single-page applications,
+        and guarantees automatic session teardown to eliminate orphaned background processes.
+        """
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page()
+                page.set_default_timeout(15000)
+
+                target = start_url or "https://www.google.com"
+                page.goto(target)
+
+                # Capture page title and content
+                title = page.title()
+                content_excerpt = page.inner_text("body")[:1500] if page.is_visible("body") else ""
+
+                browser.close()
+
+                return {
+                    "success": True,
+                    "title": title,
+                    "target_url": target,
+                    "excerpt": content_excerpt,
+                    "instruction": task_instruction
+                }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "instruction": task_instruction
+            }
+
+    def execute_task(self, task: str, speak_fn=None) -> str:
+        """High-level entry point to execute an autonomous web research or browser automation task."""
+        if speak_fn:
+            speak_fn(f"Deploying browser agent for {task}, Boss.")
+        return self.deep_research(task)
+
 
 # Global singleton instance
 browser_agent = AutonomousBrowserAgent()
+

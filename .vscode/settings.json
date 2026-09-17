@@ -1,0 +1,15 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.exclude": [
+    "**/core/gemini_web2api/**",
+    "**/.venv/**",
+    "**/graphify-out/**",
+    "**/scratch/**"
+  ],
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingImports": "none",
+    "reportMissingTypeStubs": "none",
+    "reportAttributeAccessIssue": "warning"
+  }
+}

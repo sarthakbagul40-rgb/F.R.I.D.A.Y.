@@ -125,7 +125,9 @@ def exponential_backoff(max_retries: int = 3, base_delay: float = 1.0, factor: f
                         raise e
                     time.sleep(delay)
                     delay *= factor
-            raise last_err
+            if last_err is not None:
+                raise last_err
+            raise RuntimeError("Max retries exceeded")
         return wrapper
     return decorator
 

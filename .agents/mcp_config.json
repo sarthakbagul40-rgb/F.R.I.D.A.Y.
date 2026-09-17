@@ -3,6 +3,16 @@
     "ui-ux-pro": {
       "command": "npx",
       "args": ["-y", "ui-ux-pro-mcp", "--stdio"]
+    },
+    "StitchMCP": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://stitch.googleapis.com/mcp",
+        "--header",
+        "X-Goog-Api-Key: ${STITCH_API_KEY}"
+      ]
     }
   }
 }

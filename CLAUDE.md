@@ -70,3 +70,37 @@ When orchestrating autonomous multi-agent generation & multi-file debugging:
   - `friday broadcast mode`, `friday whisper mode`, `friday dual audio mode`, `friday audio health`.
 - **Auto-Fallback**: Instant failover to PC Realtek microphone and room speakers on dock/disconnect.
 
+---
+
+## 🦹 7. PONYTAIL & SUPERPOWERS ENGINEERING DISCIPLINE
+You must strictly adhere to the **Ponytail Senior Dev Decision Ladder** before writing or editing code:
+1. **Does this need to exist?** -> If not, skip it (YAGNI).
+2. **Already in this codebase?** -> Reuse existing services (`core/comm_link.py`, `core/system_access.py`, etc.).
+3. **Python Standard Library does it?** -> Use built-in modules (`os`, `subprocess`, `json`, `ctypes`, `winreg`).
+4. **Native Windows feature does it?** -> Use native Windows commands or PowerShell.
+5. **Installed dependency?** -> Reuse installed libraries.
+6. **One line?** -> Write one line.
+7. **Only then**: The absolute minimum robust code that works. Never compromise on security, data-loss protection, or error handling.
+- **Superpowers TDD**: Never mark a feature complete until an automated verification or syntax check confirms it runs without error.
+
+---
+
+## 🕸️ 8. GRAPHIFY & OPENVIKING ZERO-HALLUCINATION CONTEXT
+- **Graphify Code Graph**: Use `core/graphify_service.py` (`query_symbol()`) to look up function signatures, classes, and call graphs. Never guess file paths or invent phantom helper methods.
+- **OpenViking 3-Tier Context**: Use `core/viking_vault.py` to retrieve L0 abstracts and L1 overviews before loading heavy files. Keep token spend minimal.
+
+---
+
+## 🔄 9. RALPH FLOW & CODERABBIT SAFETY GATEWAY
+- **Ralph Flow**: Multi-step feature tasks must be executed via `core/ralph_engine.py` in an autonomous test-and-repair loop until 100% of milestone tasks pass.
+- **CodeRabbit Reviewer**: Before committing or saving major updates, execute `core/code_reviewer.py` to audit the diff for syntax validity, leaked secrets, and breaking changes.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

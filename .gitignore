@@ -36,3 +36,11 @@ scratch/
 friday_voice_cache/
 friday_voice_permanent_cache/
 
+# Knowledge Graph AST Parser Cache & Timestamped Backups
+graphify-out/cache/
+graphify-out/202*/
+graphify-out/.*
+
+# Local Compiled Binaries
+bin/
+

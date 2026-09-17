@@ -4,7 +4,6 @@ Provides route planning, distance estimation, travel duration, point-of-interest
 and automatic Brave Browser Google Maps launching.
 """
 
-import os
 import urllib.parse
 import requests
 from typing import Dict, Any, Optional, Tuple
@@ -155,6 +154,44 @@ class GeospatialMapsEngine:
         if speak_fn:
             speak_fn(f"Pulling up satellite map telemetry for {q} in Brave, Boss.")
 
+    def launch_gods_eye_recon(self, target: str, speak_fn=None, auto_launch: bool = True) -> Dict[str, Any]:
+        """
+        F.R.I.D.A.Y. OS 10.0: God's Eye Tactical Orbital Reconnaissance.
+        Resolves target coordinates and launches high-resolution 3D orbital satellite fly-in.
+        """
+        geo = self.geocode(target)
+        if geo:
+            lat, lon, disp = geo
+        else:
+            lat, lon, disp = 0.0, 0.0, target
+
+        # 3D Photorealistic Orbital Viewer with Google 3D Tiles / Earth coordinates
+        orbital_3d_url = f"https://earth.google.com/web/@{lat},{lon},2500a,45y,0h,60t,0r"
+
+        console.print(Panel(
+            f"[bold cyan]🎯 TARGET DESIGNATION:[/bold cyan] [bold bright_white]{target.upper()}[/bold bright_white]\n"
+            f"[bold cyan]🛰️ ORBITAL COORDINATES:[/bold cyan] [bold gold1]LAT {lat:.5f} // LON {lon:.5f}[/bold gold1]\n"
+            f"[bold cyan]🌐 REGION RESOLUTION:[/bold cyan] {disp}\n"
+            f"[bold cyan]🔭 SATELLITE HUD FEED:[/bold cyan] [underline bright_blue]{orbital_3d_url}[/underline bright_blue]",
+            title="[bold red]🌐 GOD'S EYE // ORBITAL RECON PLATFORM v10.0[/bold red]",
+            border_style="red",
+            box=box.ROUNDED
+        ))
+
+        if auto_launch:
+            open_in_brave(orbital_3d_url)
+
+        if speak_fn:
+            speak_fn(f"Initiating God's Eye orbital reconnaissance over {target}, Boss. Locking satellite optics onto coordinates {lat:.2f}, {lon:.2f}.")
+
+        return {
+            "target": target,
+            "coordinates": (lat, lon),
+            "display_name": disp,
+            "orbital_url": orbital_3d_url
+        }
+
 
 # Global singleton instance
 maps_engine = GeospatialMapsEngine()
+

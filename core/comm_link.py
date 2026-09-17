@@ -14,8 +14,6 @@ Features:
 - Comprehensive Audio Health Diagnostics.
 """
 
-import os
-import sys
 import time
 import json
 import threading
@@ -173,9 +171,9 @@ class CommLinkEngine:
         if is_earbud:
             return {
                 "energy_threshold": 85,
-                "pause_threshold": 0.75,
+                "pause_threshold": 1.05,
                 "phrase_threshold": 0.15,
-                "non_speaking_duration": 0.35,
+                "non_speaking_duration": 0.65,
                 "dynamic_energy_ratio": 1.3,
                 "damping": 0.20,
                 "sample_rate": 16000,
@@ -184,9 +182,9 @@ class CommLinkEngine:
         else:
             return {
                 "energy_threshold": 115,
-                "pause_threshold": 0.80,
+                "pause_threshold": 1.15,
                 "phrase_threshold": 0.15,
-                "non_speaking_duration": 0.40,
+                "non_speaking_duration": 0.75,
                 "dynamic_energy_ratio": 1.3,
                 "damping": 0.15,
                 "sample_rate": 16000,

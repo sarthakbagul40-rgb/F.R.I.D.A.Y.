@@ -8,15 +8,15 @@ import io
 import json
 import os
 import time
-from typing import Generator, Optional, Tuple
+from typing import Generator, Optional, Any
 
 import requests
 from PIL import Image, ImageGrab
 from dotenv import load_dotenv
 load_dotenv()
 
-_cv2 = None
-def _get_cv2():
+_cv2: Any = None
+def _get_cv2() -> Any:
     global _cv2
     if _cv2 is None:
         try:
@@ -26,8 +26,8 @@ def _get_cv2():
             _cv2 = False
     return _cv2 if _cv2 is not False else None
 
-_pyautogui = None
-def _get_pyautogui():
+_pyautogui: Any = None
+def _get_pyautogui() -> Any:
     global _pyautogui
     if _pyautogui is None:
         try:

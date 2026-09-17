@@ -5,10 +5,9 @@ Enables real-time searching, star analysis, topic filtering, and architecture ex
 
 import os
 import requests
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from rich.console import Console
 from rich.table import Table
-from rich.panel import Panel
 from rich import box
 
 console = Console(force_terminal=True, legacy_windows=False)
